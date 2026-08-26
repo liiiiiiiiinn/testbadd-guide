@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ScanLine, Map, Check, ArrowDown } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
+import AboutTestbeds from "@/components/AboutTestbeds";
 
 const DOTS = ["#E8750A", "#185FA5", "#2D7A4F", "#7B68D9"];
 
@@ -144,6 +145,10 @@ export default function Home() {
               Bedömningen och metodstödet hänger ihop. Spindeldiagrammet från
               bedömningen följer med dig in i guiden.
             </p>
+          </div>
+
+          <div className="mt-16">
+            <AboutTestbeds />
           </div>
         </main>
       </div>

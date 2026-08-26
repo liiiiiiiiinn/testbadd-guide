@@ -14,6 +14,10 @@ const config: Config = {
           light: "#FDF0E6",
           border: "#F5C48A",
         },
+        blush: {
+          DEFAULT: "#FBDEE3",
+          border: "#F3C4CE",
+        },
         ink: "#1A1A1A",
         muted: "#5C5C5C",
         page: "#F7F6F3",
