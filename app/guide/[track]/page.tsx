@@ -52,24 +52,19 @@ export default function GuideOverviewPage({
           ]}
         />
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-medium" style={{ color: meta.color }}>
-              Spår {meta.letter}
-            </span>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-xs text-muted hover:text-ink transition-colors"
-              >
-                Kapacitetsöversikt →
-              </Link>
-              <Link
-                href={`/export/${meta.id}`}
-                className="text-xs text-muted hover:text-ink transition-colors"
-              >
-                Exportvy →
-              </Link>
-            </div>
+          <div className="flex items-center justify-end gap-4">
+            <Link
+              href="/dashboard"
+              className="text-xs text-muted hover:text-ink transition-colors"
+            >
+              Kapacitetsöversikt →
+            </Link>
+            <Link
+              href={`/export/${meta.id}`}
+              className="text-xs text-muted hover:text-ink transition-colors"
+            >
+              Exportvy →
+            </Link>
           </div>
           <h1 className="text-2xl font-medium text-ink">{meta.name}</h1>
           <p className="text-sm text-muted leading-relaxed max-w-xl">

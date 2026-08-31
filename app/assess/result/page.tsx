@@ -96,7 +96,7 @@ function recommendation(scores: Record<AssessmentAreaId, number | null>) {
   if (infraMetoderPct !== null && infraMetoderPct < 40) {
     return {
       trackId: "etablera" as TrackId,
-      text: "Era scores tyder på att ni är i en uppbyggnadsfas. Spår A hjälper er att lägga rätt grund.",
+      text: "Era scores tyder på att ni är i en uppbyggnadsfas. Etablera en testbädd hjälper er att lägga rätt grund.",
     };
   }
   if (overallPct !== null && overallPct > 70) {
@@ -113,7 +113,7 @@ function recommendation(scores: Record<AssessmentAreaId, number | null>) {
   }
   return {
     trackId: "etablera" as TrackId,
-    text: "Fyll i bedömningen för en skräddarsydd rekommendation. Spår A är en bra startpunkt under tiden.",
+    text: "Fyll i bedömningen för en skräddarsydd rekommendation. Att etablera en testbädd är en bra startpunkt under tiden.",
   };
 }
 
@@ -631,7 +631,7 @@ export default function AssessResultPage() {
                     className="text-[10px] uppercase tracking-[0.08em] font-medium w-fit"
                     style={{ color: recTrack.meta.color }}
                   >
-                    Spår {recTrack.meta.letter} · {recTrack.meta.name}
+                    {recTrack.meta.name}
                   </span>
                   <p className="text-sm text-ink leading-relaxed">{rec.text}</p>
                   <Link
