@@ -6,6 +6,11 @@ import type { AiButtonType, Step, TrackId } from "@/lib/types";
 import { aiButtonLabels, getAiResponse } from "@/data/aiMocks";
 
 const buttonOrder: AiButtonType[] = ["formulera", "granska", "nastasteg"];
+const buttonIcons: Record<AiButtonType, string> = {
+  formulera: "✏",
+  granska: "🔍",
+  nastasteg: "→",
+};
 
 export default function AiPanel({
   track,
@@ -42,8 +47,11 @@ export default function AiPanel({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h3 className="text-sm font-medium text-ink">AI-stöd</h3>
-        <p className="text-xs text-muted mt-0.5">I detta steg: {step.title}</p>
+        <h3 className="text-sm font-medium text-ink">Behöver du hjälp?</h3>
+        <p className="text-xs text-muted mt-1 leading-relaxed">
+          Jag kan hjälpa dig formulera svar, granska vad du skrivit eller
+          föreslå nästa steg.
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -51,10 +59,11 @@ export default function AiPanel({
           <button
             key={type}
             onClick={() => handleClick(type)}
-            className="text-left text-sm rounded-md border px-3.5 py-2.5 transition-colors hover:bg-black/[0.02]"
+            className="text-left text-sm rounded-md border px-3.5 py-2.5 transition-colors hover:bg-black/[0.02] flex items-center gap-2"
             style={{ borderColor: color, color }}
           >
-            {aiButtonLabels[type]} ↗
+            <span aria-hidden>{buttonIcons[type]}</span>
+            {aiButtonLabels[type]}
           </button>
         ))}
       </div>

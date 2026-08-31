@@ -136,24 +136,77 @@ export function useAssessmentAnswers() {
 }
 
 /**
- * Snittpoäng (1–4) för ett förmågeområde baserat på besvarade frågor.
- * Ja/nej-frågor räknas in som ja=4, delvis=2.5, nej=1 — "vet ej" räknas
- * som obesvarad. Returnerar null om inget är besvarat än.
+ * Poäng (0–4) för ett förmågeområde: summan av uppnådda poäng delat med
+ * summan av möjliga poäng, skalat till 0–4. Skattningsfrågor (1–4) räknas
+ * rakt av. Ja/nej-frågor: ja=3, delvis=2, nej=0, vet ej=0 (räknas som en
+ * brist, inte som obesvarat) — ej relevant räknas bort helt, från både
+ * uppnådd och möjlig poäng. Obesvarade frågor räknas inte alls.
+ * Returnerar null om inget är besvarat än.
  */
 export function computeAreaScore(
   areaAnswers: Record<string, AssessmentAnswer> | undefined
 ): number | null {
   if (!areaAnswers) return null;
-  const values: number[] = [];
+  let achieved = 0;
+  let max = 0;
   for (const answer of Object.values(areaAnswers)) {
     if (typeof answer.rating === "number") {
-      values.push(answer.rating);
-    } else if (answer.yesno && answer.yesno !== "vetej") {
-      values.push({ ja: 4, delvis: 2.5, nej: 1 }[answer.yesno]);
+      achieved += answer.rating;
+      max += 4;
+    } else if (answer.yesno === "ja") {
+      achieved += 3;
+      max += 3;
+    } else if (answer.yesno === "delvis") {
+      achieved += 2;
+      max += 3;
+    } else if (answer.yesno === "nej") {
+      max += 3;
+    } else if (answer.yesno === "vetej") {
+      max += 3;
     }
+    // "ejrelevant" och obesvarat: räknas inte alls.
   }
-  if (values.length === 0) return null;
-  return values.reduce((a, b) => a + b, 0) / values.length;
+  if (max === 0) return null;
+  return (achieved / max) * 4;
+}
+
+// ─────────────────────────────────────────────────────────
+// Separata flaggregister för "vet ej" och "ej relevant"-svar i
+// förmågebedömningen, nyckel: `${areaId}_${questionId}`.
+// ─────────────────────────────────────────────────────────
+
+const ASSESS_VETEJ_KEY = "tbg_assess_vetej";
+const ASSESS_EJRELEVANT_KEY = "tbg_assess_ejrelevant";
+
+function useAssessFlags(key: string) {
+  const [flags, setFlags] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setFlags(readStorage<Record<string, boolean>>(key, {}));
+  }, [key]);
+
+  const setFlag = useCallback(
+    (flagId: string, value: boolean) => {
+      setFlags((prev) => {
+        const next = { ...prev };
+        if (value) next[flagId] = true;
+        else delete next[flagId];
+        writeStorage(key, next);
+        return next;
+      });
+    },
+    [key]
+  );
+
+  return { flags, setFlag };
+}
+
+export function useAssessVetEjFlags() {
+  return useAssessFlags(ASSESS_VETEJ_KEY);
+}
+
+export function useAssessEjRelevantFlags() {
+  return useAssessFlags(ASSESS_EJRELEVANT_KEY);
 }
 
 export function computeAllScores(

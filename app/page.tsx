@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ScanLine, Map, Check, ArrowDown } from "lucide-react";
+import { ScanLine, Map, Check, ArrowDown, RotateCcw } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
+import { assessmentAreas, countAnswered } from "@/data/assessment";
+import { useAssessmentAnswers } from "@/lib/storage";
 
 const DOTS = ["#E8750A", "#185FA5", "#2D7A4F", "#7B68D9"];
 
@@ -15,10 +17,28 @@ const TRACK_PILLS = [
 ];
 
 export default function Home() {
+  const { answers } = useAssessmentAnswers();
+  const hasStartedAssessment = assessmentAreas.some(
+    (area) => countAnswered(area, answers[area.id]) > 0
+  );
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-page">
         <Navbar />
+
+        {hasStartedAssessment && (
+          <div style={{ backgroundColor: "#EAF4EE" }}>
+            <Link
+              href="/assess"
+              className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-center gap-2 text-sm font-medium hover:opacity-80 transition-opacity"
+              style={{ color: "#2D7A4F" }}
+            >
+              <RotateCcw size={14} />
+              Du har en påbörjad bedömning. Fortsätt där du slutade →
+            </Link>
+          </div>
+        )}
 
         <main className="max-w-3xl mx-auto px-6 pb-24">
           <div className="flex flex-col items-center text-center gap-0 pt-20 max-w-[560px] mx-auto">
@@ -46,7 +66,15 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-12">
+          <p
+            className="text-center text-sm leading-relaxed max-w-[480px] mx-auto mt-8"
+            style={{ color: "#5C5C5C" }}
+          >
+            Börja med att bedöma er förmåga — eller gå direkt till
+            metodstödet om ni redan vet var ni vill utvecklas.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
             <motion.div
               whileHover={{ y: -2 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
@@ -57,13 +85,7 @@ export default function Home() {
               }}
             >
               <ScanLine size={28} color="#E8750A" strokeWidth={1.75} />
-              <p
-                className="text-[10px] uppercase tracking-[0.08em] font-medium mt-5"
-                style={{ color: "#E8750A" }}
-              >
-                Steg 1 · Kartlägg
-              </p>
-              <h2 className="text-xl font-medium text-ink mt-2">
+              <h2 className="text-xl font-medium text-ink mt-5">
                 Bedöm er förmåga
               </h2>
               <p className="text-sm text-muted leading-[1.6] mt-2.5">
@@ -103,10 +125,7 @@ export default function Home() {
               style={{ border: "1.5px solid #E8E5E0" }}
             >
               <Map size={28} color="#5C5C5C" strokeWidth={1.75} />
-              <p className="text-[10px] uppercase tracking-[0.08em] font-medium mt-5 text-muted">
-                Steg 2 · Utveckla
-              </p>
-              <h2 className="text-xl font-medium text-ink mt-2">
+              <h2 className="text-xl font-medium text-ink mt-5">
                 Följ metodstödet
               </h2>
               <p className="text-sm text-muted leading-[1.6] mt-2.5">

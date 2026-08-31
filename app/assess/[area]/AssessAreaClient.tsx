@@ -17,8 +17,11 @@ export default function AssessAreaClient({ areaId }: { areaId: string }) {
   const answered = countAnswered(area, areaAnswers);
   const total = area.questions.length;
   const isComplete = answered === total;
+  const remainingMin = Math.ceil((total - answered) * 0.5);
 
   const nextArea = assessmentAreas[areaIndex + 1];
+  const nextLabel = nextArea ? `Nästa område: ${nextArea.title} →` : "Se ert resultat →";
+  const nextHref = nextArea ? `/assess/${nextArea.id}` : "/assess/result";
 
   return (
     <PageTransition>
@@ -63,6 +66,10 @@ export default function AssessAreaClient({ areaId }: { areaId: string }) {
             Förmågeområde {areaIndex + 1} av {assessmentAreas.length} ·{" "}
             <span style={{ color: area.color }}>{area.title}</span>
           </p>
+          <p className="text-center text-xs text-muted mt-1">
+            Fråga {answered} av {total} besvarade
+            {remainingMin > 0 && ` · ca ${remainingMin} min kvar`}
+          </p>
 
           <div className="mt-10">
             {area.questions.map((question, i) => (
@@ -86,15 +93,18 @@ export default function AssessAreaClient({ areaId }: { areaId: string }) {
               <p className="text-sm text-muted mt-1">
                 Ni har besvarat alla frågor i detta område.
               </p>
-              <Link
-                href={nextArea ? `/assess/${nextArea.id}` : "/assess/result"}
-                className="inline-block mt-4 text-white text-sm font-medium rounded-[10px] px-6 py-3"
-                style={{ backgroundColor: area.color }}
-              >
-                {nextArea ? "Se nästa förmågeområde →" : "Se ert resultat →"}
-              </Link>
             </div>
           )}
+
+          <div className="flex justify-center mt-8">
+            <Link
+              href={nextHref}
+              className="inline-block text-white text-sm font-medium rounded-[10px] px-6 py-3 transition-opacity hover:opacity-90"
+              style={{ backgroundColor: area.color }}
+            >
+              {nextLabel}
+            </Link>
+          </div>
         </main>
       </div>
     </PageTransition>

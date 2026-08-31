@@ -74,7 +74,19 @@ h1, h2, h3, h4, h5, h6 {
   .no-print {
     display: none !important;
   }
-  body {
-    background: #ffffff;
+  body,
+  .bg-page {
+    background: #ffffff !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  @page {
+    margin: 16mm 14mm;
+  }
+  .print-page-break {
+    break-before: page;
   }
 }

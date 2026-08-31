@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ASSESSMENT_QUESTION_ID, type Track } from "@/lib/types";
-import { getChecklistItems } from "@/data/playbook";
-import { useAnswers, useChecks, useDoneSteps } from "@/lib/storage";
+import { ASSESSMENT_QUESTION_ID, type Track, type TrackId } from "@/lib/types";
+import { getChecklistItems, getPhases } from "@/data/playbook";
+import { assessmentAreaForCapacity } from "@/data/assessment";
+import { computeAreaScore, useAnswers, useAssessmentAnswers, useChecks, useDoneSteps } from "@/lib/storage";
 import QuestionField from "./QuestionField";
 import Checklist from "./Checklist";
 import MeasurementAreas from "./MeasurementAreas";
@@ -42,6 +43,18 @@ export default function StepContent({
   const nextStep = steps[stepIndex + 1];
   const stepLabel = `${meta.letter}${stepIndex + 1}`;
 
+  const phaseMateCapacityArea =
+    !step.capacityArea &&
+    getPhases(meta.id as TrackId)
+      .find((phase) => phase.stepIds.includes(step.id))
+      ?.stepIds.map((id) => steps.find((s) => s.id === id)?.capacityArea)
+      .find((area): area is NonNullable<typeof area> => !!area);
+  const { answers: assessmentAnswers } = useAssessmentAnswers();
+  const phaseMateScore = phaseMateCapacityArea
+    ? computeAreaScore(assessmentAnswers[assessmentAreaForCapacity(phaseMateCapacityArea).id])
+    : null;
+  const showPhaseMateChip = phaseMateCapacityArea && phaseMateScore !== null && phaseMateScore < 2.5;
+
   return (
     <motion.div
       key={step.id}
@@ -51,6 +64,9 @@ export default function StepContent({
       className="flex flex-col gap-7"
     >
       {step.capacityArea && <AbilityChip capacityArea={step.capacityArea} />}
+      {showPhaseMateChip && phaseMateCapacityArea && (
+        <AbilityChip capacityArea={phaseMateCapacityArea} />
+      )}
 
       <div className="flex flex-col gap-2 border-l-4 pl-4" style={{ borderColor: meta.color }}>
         <span className="text-xs font-medium" style={{ color: meta.color }}>

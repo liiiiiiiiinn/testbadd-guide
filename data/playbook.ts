@@ -5,6 +5,7 @@ import type {
   Track,
   TrackId,
   TrackMeta,
+  TrackPhase,
 } from "@/lib/types";
 
 function q(id: string, text: string, placeholder = "Skriv ditt svar här..."): Question {
@@ -889,4 +890,36 @@ export function findCapacityStep(
   areaId: string
 ): Step | undefined {
   return tracks[trackId].steps.find((s) => s.capacityArea === areaId);
+}
+
+// ─────────────────────────────────────────────────────────
+// FASINDELNING — varje spårs 8 steg grupperade i 4 tematiska
+// faser om 2 steg vardera, för stegöversiktens fasindelade vy.
+// Fasfärgerna är fasta över alla spår (samma fyra som förmåge-
+// områdena) för ett återkommande visuellt system.
+// ─────────────────────────────────────────────────────────
+
+const PHASES: Record<TrackId, TrackPhase[]> = {
+  etablera: [
+    { name: "Strategi", color: "#E8750A", estimate: "ca 45 min", stepIds: ["a1", "a2"] },
+    { name: "Infrastruktur och metoder", color: "#185FA5", estimate: "ca 45 min", stepIds: ["a3", "a4"] },
+    { name: "Aktörer och juridik", color: "#2D7A4F", estimate: "ca 45 min", stepIds: ["a5", "a6"] },
+    { name: "Kommunikation och plan", color: "#7B68D9", estimate: "ca 45 min", stepIds: ["a7", "a8"] },
+  ],
+  driva: [
+    { name: "Hälsokontroll", color: "#E8750A", estimate: "ca 45 min", stepIds: ["b1", "b2"] },
+    { name: "Metoder och data", color: "#185FA5", estimate: "ca 45 min", stepIds: ["b3", "b4"] },
+    { name: "Kompetens och prioritering", color: "#2D7A4F", estimate: "ca 45 min", stepIds: ["b5", "b6"] },
+    { name: "Skalning och plan", color: "#7B68D9", estimate: "ca 45 min", stepIds: ["b7", "b8"] },
+  ],
+  skala: [
+    { name: "Mognad och infrastruktur", color: "#E8750A", estimate: "ca 45 min", stepIds: ["s1", "s2"] },
+    { name: "Metoder och data", color: "#185FA5", estimate: "ca 45 min", stepIds: ["s3", "s4"] },
+    { name: "Förvaltning och dimension", color: "#2D7A4F", estimate: "ca 45 min", stepIds: ["s5", "s6"] },
+    { name: "Finansiering och plan", color: "#7B68D9", estimate: "ca 45 min", stepIds: ["s7", "s8"] },
+  ],
+};
+
+export function getPhases(trackId: TrackId): TrackPhase[] {
+  return PHASES[trackId];
 }

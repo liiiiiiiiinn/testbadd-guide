@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Clock, Save, PauseCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -37,6 +37,20 @@ export default function AssessOverviewPage() {
               Fyra förmågeområden, cirka 5–10 minuter totalt. Ni kan pausa och
               återuppta när som helst.
             </p>
+            <div className="flex items-center justify-center flex-wrap gap-x-5 gap-y-1.5 mt-4 text-xs text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <Clock size={13} />
+                ca 5–10 minuter
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Save size={13} />
+                Sparas automatiskt
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <PauseCircle size={13} />
+                Kan pausas
+              </span>
+            </div>
           </div>
 
           <div className="flex items-start justify-center gap-0 mt-12">

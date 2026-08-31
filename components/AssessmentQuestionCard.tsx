@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Info } from "lucide-react";
 import type { AssessmentAnswer, AssessmentArea, AssessmentQuestion, YesNoValue } from "@/lib/types";
+import { useAssessEjRelevantFlags, useAssessVetEjFlags } from "@/lib/storage";
 import ConfettiBurst from "./ConfettiBurst";
 
 const YES_NO_OPTIONS: { value: YesNoValue; label: string }[] = [
@@ -9,6 +11,7 @@ const YES_NO_OPTIONS: { value: YesNoValue; label: string }[] = [
   { value: "delvis", label: "Delvis" },
   { value: "nej", label: "Nej" },
   { value: "vetej", label: "Vet ej" },
+  { value: "ejrelevant", label: "Ej relevant" },
 ];
 
 export default function AssessmentQuestionCard({
@@ -31,6 +34,10 @@ export default function AssessmentQuestionCard({
   const commentDebounce = useRef<ReturnType<typeof setTimeout>>();
   const [burstValue, setBurstValue] = useState<number | null>(null);
   const burstTimer = useRef<ReturnType<typeof setTimeout>>();
+  const [whyOpen, setWhyOpen] = useState(false);
+  const { setFlag: setVetEj } = useAssessVetEjFlags();
+  const { setFlag: setEjRelevant } = useAssessEjRelevantFlags();
+  const flagId = `${area.id}_${question.id}`;
 
   useEffect(() => {
     setComment(answer?.comment ?? "");
@@ -67,8 +74,11 @@ export default function AssessmentQuestionCard({
   }
 
   function handleYesNo(value: YesNoValue) {
-    onChange({ yesno: answer?.yesno === value ? undefined : value });
+    const next = answer?.yesno === value ? undefined : value;
+    onChange({ yesno: next });
     flashSaved();
+    setVetEj(flagId, next === "vetej");
+    setEjRelevant(flagId, next === "ejrelevant");
   }
 
   function handleCommentChange(next: string) {
@@ -91,9 +101,37 @@ export default function AssessmentQuestionCard({
         {savedState === "saving" ? "Sparar..." : "Sparat ✓"}
       </span>
 
-      <p className="text-[17px] font-medium text-ink mt-1.5 leading-[1.45]">
-        {question.text}
-      </p>
+      <div className="flex items-start justify-between gap-2 mt-1.5">
+        <p className="text-[17px] font-medium text-ink leading-[1.45]">
+          {question.text}
+        </p>
+        {question.why && (
+          <button
+            type="button"
+            onClick={() => setWhyOpen((v) => !v)}
+            aria-label="Varför spelar detta roll?"
+            className="shrink-0 mt-0.5 transition-transform duration-200 hover:scale-110"
+          >
+            <Info size={15} color="#C4C0BB" />
+          </button>
+        )}
+      </div>
+
+      {question.why && (
+        <div
+          className="grid transition-all duration-300 ease-out"
+          style={{ gridTemplateRows: whyOpen ? "1fr" : "0fr" }}
+        >
+          <div className="overflow-hidden">
+            <div
+              className="text-[13px] text-ink leading-relaxed rounded-lg px-3.5 py-2.5 mt-2.5"
+              style={{ backgroundColor: "#F7F6F3" }}
+            >
+              {question.why}
+            </div>
+          </div>
+        </div>
+      )}
 
       {question.type === "rating" && question.rating && (
         <div className="mt-4">
@@ -131,17 +169,27 @@ export default function AssessmentQuestionCard({
         <div className="flex flex-wrap gap-2 mt-4">
           {YES_NO_OPTIONS.map((opt) => {
             const isSelected = answer?.yesno === opt.value;
+            const isEjRelevant = opt.value === "ejrelevant";
             return (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => handleYesNo(opt.value)}
                 className="text-sm rounded-full px-5 py-2.5 transition-colors duration-150"
-                style={{
-                  backgroundColor: isSelected ? area.lightColor : "#fff",
-                  border: `1.5px solid ${isSelected ? area.color : "#E8E5E0"}`,
-                  color: isSelected ? area.color : "#1A1A1A",
-                }}
+                style={
+                  isEjRelevant
+                    ? {
+                        backgroundColor: isSelected ? "#F0EFEC" : "#fff",
+                        border: "1.5px solid #C4C0BB",
+                        color: "#9C9893",
+                        textDecoration: isSelected ? "line-through" : "none",
+                      }
+                    : {
+                        backgroundColor: isSelected ? area.lightColor : "#fff",
+                        border: `1.5px solid ${isSelected ? area.color : "#E8E5E0"}`,
+                        color: isSelected ? area.color : "#1A1A1A",
+                      }
+                }
               >
                 {opt.label}
               </button>

@@ -14,6 +14,7 @@ export default function QuestionField({
 }) {
   const [text, setText] = useState(value);
   const [saved, setSaved] = useState(false);
+  const [focused, setFocused] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const savedFlashRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -54,8 +55,10 @@ export default function QuestionField({
       <textarea
         value={text}
         onChange={(e) => handleChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         placeholder={question.placeholder}
-        style={{ minHeight: 80 }}
+        style={{ minHeight: focused ? 120 : 72, transition: "min-height 0.2s ease-out" }}
         className="w-full rounded-md border border-line bg-card px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/60 focus:outline-none focus:border-brand resize-y"
       />
     </div>

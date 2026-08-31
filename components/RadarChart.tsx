@@ -43,7 +43,10 @@ export default function RadarChart({
   const n = assessmentAreas.length;
 
   return (
-    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="mx-auto">
+    <svg
+      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      className="mx-auto block w-[280px] h-[280px] sm:w-[360px] sm:h-[360px]"
+    >
       <defs>
         <linearGradient id="radar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
           {assessmentAreas.map((area, i) => (

@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Check } from "lucide-react";
 import Logo from "@/components/Logo";
 import ProgressBar from "@/components/ProgressBar";
 import TopNavLinks from "@/components/TopNavLinks";
 import Breadcrumb from "@/components/Breadcrumb";
-import { getTrack, isValidTrack } from "@/data/playbook";
-import { useAnswers, useChecks, useDoneSteps } from "@/lib/storage";
+import { getPhases, getTrack, isValidTrack } from "@/data/playbook";
+import { assessmentAreaForCapacity } from "@/data/assessment";
+import { computeAreaScore, useAnswers, useAssessmentAnswers, useChecks, useDoneSteps } from "@/lib/storage";
+import type { TrackId } from "@/lib/types";
 
 function stepStatus(
-  stepId: string,
   isDone: boolean,
   hasAnswers: boolean,
   hasChecks: boolean
@@ -33,8 +35,10 @@ export default function GuideOverviewPage({
   const { answers } = useAnswers(meta.id);
   const { checks } = useChecks(meta.id);
   const { done } = useDoneSteps(meta.id);
+  const { answers: assessmentAnswers } = useAssessmentAnswers();
 
   const doneCount = steps.filter((s) => done[s.id]).length;
+  const phases = getPhases(meta.id as TrackId);
 
   return (
     <div className="min-h-screen bg-page">
@@ -81,53 +85,96 @@ export default function GuideOverviewPage({
 
         <ProgressBar done={doneCount} total={steps.length} color={meta.color} />
 
-        <ol className="flex flex-col gap-2">
-          {steps.map((step, i) => {
-            const stepAnswers = answers[step.id] ?? {};
-            const hasAnswers = Object.values(stepAnswers).some((v) => v?.trim());
-            const stepChecks = checks[step.id] ?? {};
-            const hasChecks = Object.values(stepChecks).some(Boolean);
-            const status = stepStatus(step.id, !!done[step.id], hasAnswers, hasChecks);
+        <div className="flex flex-col gap-6">
+          {phases.map((phase) => {
+            const phaseSteps = phase.stepIds
+              .map((id) => steps.find((s) => s.id === id))
+              .filter((s): s is (typeof steps)[number] => !!s);
+            const abilitySteps = phaseSteps.filter((s) => s.capacityArea);
 
             return (
-              <li key={step.id}>
-                <Link
-                  href={`/guide/${meta.id}/${step.id}`}
-                  className="flex items-center gap-4 bg-card border border-line rounded-md px-5 py-4 hover:border-black/20 transition-colors"
+              <div key={phase.name} className="flex flex-col gap-2">
+                <div
+                  className="flex items-center justify-between gap-3 pl-3"
+                  style={{ borderLeft: `2px solid ${phase.color}` }}
                 >
                   <span
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium"
-                    style={{
-                      backgroundColor: status.tone === "done" ? meta.color : meta.light,
-                      color: status.tone === "done" ? "#fff" : meta.color,
-                    }}
+                    className="text-[11px] font-medium uppercase tracking-[0.06em]"
+                    style={{ color: phase.color }}
                   >
-                    {i + 1}
+                    {phase.name}
                   </span>
-                  <span className="flex-1 text-sm text-ink font-medium">
-                    {step.title}
-                  </span>
-                  <span
-                    className="text-xs shrink-0"
-                    style={{
-                      color:
-                        status.tone === "done"
-                          ? "#2D7A4F"
-                          : status.tone === "started"
-                          ? meta.color
-                          : "#5C5C5C",
-                    }}
-                  >
-                    {status.label}
-                  </span>
-                  <span className="text-sm shrink-0" style={{ color: meta.color }}>
-                    Gå till →
-                  </span>
-                </Link>
-              </li>
+                  <div className="flex items-center gap-3">
+                    {abilitySteps.map((step) => {
+                      const abilityArea = assessmentAreaForCapacity(step.capacityArea!);
+                      const abilityScore = computeAreaScore(assessmentAnswers[abilityArea.id]);
+                      if (abilityScore === null) return null;
+                      return (
+                        <span
+                          key={step.id}
+                          className="text-[11px] rounded-full px-2 py-0.5"
+                          style={{ backgroundColor: abilityArea.lightColor, color: abilityArea.color }}
+                        >
+                          Er förmåga: {abilityScore.toFixed(1)}/4
+                        </span>
+                      );
+                    })}
+                    <span className="text-xs text-muted shrink-0">{phase.estimate}</span>
+                  </div>
+                </div>
+
+                <ol className="flex flex-col gap-1.5">
+                  {phaseSteps.map((step) => {
+                    const i = steps.findIndex((s) => s.id === step.id);
+                    const stepAnswers = answers[step.id] ?? {};
+                    const hasAnswers = Object.values(stepAnswers).some((v) => v?.trim());
+                    const stepChecks = checks[step.id] ?? {};
+                    const hasChecks = Object.values(stepChecks).some(Boolean);
+                    const status = stepStatus(!!done[step.id], hasAnswers, hasChecks);
+
+                    return (
+                      <li key={step.id}>
+                        <Link
+                          href={`/guide/${meta.id}/${step.id}`}
+                          className="flex items-center gap-3 h-12 bg-card border border-line rounded-md px-4 hover:border-black/20 transition-colors"
+                        >
+                          <span
+                            className="text-sm font-medium w-5 shrink-0"
+                            style={{ color: phase.color }}
+                          >
+                            {i + 1}
+                          </span>
+                          <span className="flex-1 text-sm text-ink truncate">
+                            {step.title}
+                          </span>
+                          {status.tone === "done" ? (
+                            <Check size={15} color="#2D7A4F" strokeWidth={2.5} />
+                          ) : status.tone === "started" ? (
+                            <span
+                              className="h-2 w-2 rounded-full shrink-0"
+                              style={{ backgroundColor: meta.color }}
+                            />
+                          ) : (
+                            <span
+                              className="h-2 w-2 rounded-full shrink-0"
+                              style={{ border: "1.5px solid rgba(0,0,0,0.18)" }}
+                            />
+                          )}
+                          <span
+                            className="text-xs font-medium shrink-0 hidden sm:inline"
+                            style={{ color: meta.color }}
+                          >
+                            Gå till →
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
             );
           })}
-        </ol>
+        </div>
       </main>
     </div>
   );

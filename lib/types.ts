@@ -77,6 +77,14 @@ export interface Track {
   steps: Step[];
 }
 
+/** En grupp av 2 steg som hör ihop tematiskt, för den fasindelade stegöversikten. */
+export interface TrackPhase {
+  name: string;
+  color: string;
+  estimate: string;
+  stepIds: string[];
+}
+
 export type AiButtonType = "formulera" | "granska" | "nastasteg";
 
 export type AnswersState = Record<string, Record<string, string>>;
@@ -127,7 +135,7 @@ export interface AssessmentArea {
   questions: AssessmentQuestion[];
 }
 
-export type YesNoValue = "ja" | "delvis" | "nej" | "vetej";
+export type YesNoValue = "ja" | "delvis" | "nej" | "vetej" | "ejrelevant";
 
 export interface AssessmentAnswer {
   rating?: number;
