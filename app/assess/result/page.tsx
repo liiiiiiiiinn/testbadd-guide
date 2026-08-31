@@ -411,7 +411,6 @@ export default function AssessResultPage() {
             <Breadcrumb
               items={[
                 { label: "Start", href: "/" },
-                { label: "Bedömning", href: "/assess" },
                 { label: "Resultat" },
               ]}
             />

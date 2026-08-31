@@ -49,7 +49,13 @@ export default function CapacityDashboard() {
       <Navbar backHref="/guide/etablera" />
 
       <main className="max-w-4xl mx-auto px-6 pt-4 pb-24 md:pb-12 flex flex-col gap-10">
-        <Breadcrumb items={[{ label: "Start", href: "/" }, { label: "Kapacitetsöversikt" }]} />
+        <Breadcrumb
+          items={[
+            { label: "Start", href: "/" },
+            { label: "Metodstöd", href: "/guide/etablera" },
+            { label: "Kapacitetsöversikt" },
+          ]}
+        />
         <nav className="flex items-center gap-4 text-sm text-muted -mt-4">
           {PHASE_TRACKS.map((trackId) => (
             <Link

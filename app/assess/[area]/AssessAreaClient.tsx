@@ -33,7 +33,7 @@ export default function AssessAreaClient({ areaId }: { areaId: string }) {
             <Breadcrumb
               items={[
                 { label: "Start", href: "/" },
-                { label: "Bedömning", href: "/assess" },
+                { label: "Bedöm förmåga", href: "/assess" },
                 { label: area.title },
               ]}
             />

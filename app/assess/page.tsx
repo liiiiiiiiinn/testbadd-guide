@@ -27,7 +27,7 @@ export default function AssessOverviewPage() {
 
         <main className="max-w-3xl mx-auto px-6 pb-24">
           <div className="pt-4">
-            <Breadcrumb items={[{ label: "Start", href: "/" }, { label: "Bedömning" }]} />
+            <Breadcrumb items={[{ label: "Start", href: "/" }, { label: "Bedöm förmåga" }]} />
           </div>
           <div className="text-center pt-8">
             <h1 className="text-[28px] font-medium text-ink">

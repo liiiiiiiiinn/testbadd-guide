@@ -29,7 +29,7 @@ export default function StepPageClient({
         <Breadcrumb
           items={[
             { label: "Start", href: "/" },
-            { label: "Guide", href: "/guide/etablera" },
+            { label: "Metodstöd", href: "/guide/etablera" },
             { label: meta.shortName, href: `/guide/${meta.id}` },
             { label: step.title },
           ]}

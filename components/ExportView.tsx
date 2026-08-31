@@ -177,7 +177,7 @@ export default function ExportView({ track }: { track: Track }) {
           <Breadcrumb
             items={[
               { label: "Start", href: "/" },
-              { label: "Guide", href: "/guide/etablera" },
+              { label: "Metodstöd", href: "/guide/etablera" },
               { label: track.meta.shortName, href: `/guide/${track.meta.id}` },
               { label: "Export" },
             ]}
