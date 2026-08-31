@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { Check } from "lucide-react";
 import { ASSESSMENT_QUESTION_ID, RATING_LABELS, RATING_SCALE, type Track } from "@/lib/types";
 import { getChecklistItems } from "@/data/playbook";
 import { useAnswers, useChecks } from "@/lib/storage";
-import Logo from "./Logo";
-import TopNavLinks from "./TopNavLinks";
+import Navbar from "./Navbar";
 import Breadcrumb from "./Breadcrumb";
 
 function buildMarkdown(track: Track, answers: ReturnType<typeof useAnswers>["answers"], checks: ReturnType<typeof useChecks>["checks"]) {
@@ -173,35 +171,9 @@ export default function ExportView({ track }: { track: Track }) {
 
   return (
     <div className="min-h-screen bg-page">
-      <div className="no-print border-b border-line bg-card">
-        <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Logo showSubtitle={false} />
-          <div className="flex items-center gap-6">
-            <TopNavLinks />
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleCopy}
-                className="text-sm rounded-md border border-line px-3.5 py-2 text-ink hover:bg-black/[0.02] transition-colors"
-              >
-                {copied ? "Kopierat ✓" : "Kopiera som text"}
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="text-sm rounded-md border border-line px-3.5 py-2 text-ink hover:bg-black/[0.02] transition-colors"
-              >
-                Skriv ut
-              </button>
-              <Link
-                href={`/guide/${track.meta.id}`}
-                className="text-sm rounded-md px-3.5 py-2 text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: track.meta.color }}
-              >
-                ← Tillbaka till guiden
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-3xl mx-auto px-6 pb-4">
+      <div className="no-print">
+        <Navbar backHref={`/guide/${track.meta.id}`} />
+        <div className="max-w-3xl mx-auto px-6 pt-4">
           <Breadcrumb
             items={[
               { label: "Start", href: "/" },
@@ -214,11 +186,27 @@ export default function ExportView({ track }: { track: Track }) {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-10 pb-24 md:pb-10 flex flex-col gap-10">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="text-2xl font-medium text-ink">
-            {track.meta.name} — Sammanställning
-          </h1>
-          <p className="text-sm text-muted">Genererat {today}</p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-2xl font-medium text-ink">
+              {track.meta.name} — Sammanställning
+            </h1>
+            <p className="text-sm text-muted">Genererat {today}</p>
+          </div>
+          <div className="no-print flex items-center gap-3">
+            <button
+              onClick={handleCopy}
+              className="text-sm rounded-md border border-line px-3.5 py-2 text-ink hover:bg-black/[0.02] transition-colors"
+            >
+              {copied ? "Kopierat ✓" : "Kopiera som text"}
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="text-sm rounded-md border border-line px-3.5 py-2 text-ink hover:bg-black/[0.02] transition-colors"
+            >
+              Skriv ut
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-x-6 gap-y-2 rounded-md border border-line bg-card px-5 py-4 text-sm text-ink break-inside-avoid">

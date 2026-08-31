@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
-import Logo from "@/components/Logo";
+import Navbar from "@/components/Navbar";
 import ProgressBar from "@/components/ProgressBar";
-import TopNavLinks from "@/components/TopNavLinks";
 import Breadcrumb from "@/components/Breadcrumb";
 import { getPhases, getTrack, isValidTrack } from "@/data/playbook";
 import { assessmentAreaForCapacity } from "@/data/assessment";
@@ -42,28 +41,7 @@ export default function GuideOverviewPage({
 
   return (
     <div className="min-h-screen bg-page">
-      <header className="border-b border-line">
-        <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Logo showSubtitle={false} />
-          <div className="flex items-center gap-6">
-            <TopNavLinks />
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-sm text-muted hover:text-ink transition-colors"
-              >
-                Kapacitetsöversikt →
-              </Link>
-              <Link
-                href={`/export/${meta.id}`}
-                className="text-sm text-muted hover:text-ink transition-colors"
-              >
-                Exportvy →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-3xl mx-auto px-6 pt-4 pb-24 md:pb-12 flex flex-col gap-8">
         <Breadcrumb
@@ -74,9 +52,25 @@ export default function GuideOverviewPage({
           ]}
         />
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium" style={{ color: meta.color }}>
-            Spår {meta.letter}
-          </span>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs font-medium" style={{ color: meta.color }}>
+              Spår {meta.letter}
+            </span>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/dashboard"
+                className="text-xs text-muted hover:text-ink transition-colors"
+              >
+                Kapacitetsöversikt →
+              </Link>
+              <Link
+                href={`/export/${meta.id}`}
+                className="text-xs text-muted hover:text-ink transition-colors"
+              >
+                Exportvy →
+              </Link>
+            </div>
+          </div>
           <h1 className="text-2xl font-medium text-ink">{meta.name}</h1>
           <p className="text-sm text-muted leading-relaxed max-w-xl">
             {meta.description}

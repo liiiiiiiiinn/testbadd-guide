@@ -417,8 +417,9 @@ export default function AssessResultPage() {
             />
           </div>
 
+          <h1 className="text-center text-[28px] font-medium text-ink mt-6">Resultat</h1>
           <p
-            className="text-center text-[13px] uppercase text-muted mt-6"
+            className="text-center text-[13px] uppercase text-muted mt-1.5"
             style={{ letterSpacing: "0.08em" }}
           >
             Er förmågeprofil · {today}
@@ -490,7 +491,14 @@ export default function AssessResultPage() {
 
               {/* SEKTION 2 — SPINDELDIAGRAM */}
               <div className="mt-12">
-                <RadarChart scores={scores} ghosts={showCompare ? snapshots.map((s) => s.scores) : []} />
+                <RadarChart
+                  scores={scores}
+                  ghosts={showCompare ? snapshots.map((s) => s.scores) : []}
+                  interactive
+                />
+                <p className="text-center text-xs text-muted mt-2">
+                  Klicka på ett hörn i diagrammet för att hoppa till området
+                </p>
                 <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
                   {assessmentAreas.map((area) => {
                     const pct = pctOf(scores[area.id]);

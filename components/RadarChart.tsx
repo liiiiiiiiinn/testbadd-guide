@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { assessmentAreas } from "@/data/assessment";
 import type { AssessmentAreaId } from "@/lib/types";
 
 const SIZE = 380;
 const CENTER = SIZE / 2;
-const MAX_R = 100;
-const LABEL_R = MAX_R + 32;
+const MAX_R = 115;
+const LABEL_R = MAX_R + 20;
 const RINGS = [0.25, 0.5, 0.75, 1];
 
 /** Textankare per axel så etiketten växer bort från centrum istället för att klippas. */
@@ -33,19 +34,27 @@ function polygonPoints(scores: Record<AssessmentAreaId, number | null>) {
     .join(" ");
 }
 
+function scrollToArea(areaId: string) {
+  document.getElementById(`area-${areaId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 export default function RadarChart({
   scores,
   ghosts = [],
+  interactive = false,
 }: {
   scores: Record<AssessmentAreaId, number | null>;
   ghosts?: Record<AssessmentAreaId, number | null>[];
+  /** Gör hörnen klickbara (hoppar till områdessektionen) och visar värde vid hover. */
+  interactive?: boolean;
 }) {
   const n = assessmentAreas.length;
+  const [hovered, setHovered] = useState<AssessmentAreaId | null>(null);
 
   return (
     <svg
       viewBox={`0 0 ${SIZE} ${SIZE}`}
-      className="mx-auto block w-[280px] h-[280px] sm:w-[360px] sm:h-[360px]"
+      className="mx-auto block w-[320px] h-[320px] sm:w-[480px] sm:h-[480px]"
     >
       <defs>
         <linearGradient id="radar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -121,22 +130,56 @@ export default function RadarChart({
         const value = scores[area.id];
         const [px, py] = pointFor(i, n, (value ?? 0) / 4);
         const [lx, ly] = pointFor(i, n, LABEL_R / MAX_R);
+        const isHovered = interactive && hovered === area.id;
+        const valueLabel =
+          value !== null && value !== undefined ? `${value.toFixed(1)}/4` : "Ej bedömt";
+
         return (
-          <g key={area.id}>
-            <title>{`${area.title}: ${
-              value !== null && value !== undefined ? value.toFixed(1) : "Ej bedömt"
-            }`}</title>
-            <circle cx={px} cy={py} r={4} fill={area.color} stroke="#fff" strokeWidth={2} />
+          <g
+            key={area.id}
+            style={interactive ? { cursor: "pointer" } : undefined}
+            onMouseEnter={interactive ? () => setHovered(area.id) : undefined}
+            onMouseLeave={interactive ? () => setHovered(null) : undefined}
+            onClick={interactive ? () => scrollToArea(area.id) : undefined}
+            tabIndex={interactive ? 0 : undefined}
+            role={interactive ? "button" : undefined}
+            aria-label={interactive ? `Gå till ${area.title}` : undefined}
+            onKeyDown={
+              interactive
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      scrollToArea(area.id);
+                    }
+                  }
+                : undefined
+            }
+          >
+            <title>{`${area.title}: ${valueLabel}`}</title>
+            {interactive && (
+              <circle cx={px} cy={py} r={18} fill="transparent" style={{ pointerEvents: "all" }} />
+            )}
+            {isHovered && (
+              <circle cx={px} cy={py} r={10} fill={area.color} opacity={0.18} />
+            )}
+            <circle
+              cx={px}
+              cy={py}
+              r={isHovered ? 6 : 4}
+              fill={area.color}
+              stroke="#fff"
+              strokeWidth={2}
+            />
             <text
               x={lx}
               y={ly}
               textAnchor={anchorFor(i, n)}
               dominantBaseline="middle"
-              fontSize={11}
-              fontWeight={500}
+              fontSize={isHovered ? 12.5 : 11}
+              fontWeight={isHovered ? 700 : 500}
               fill={area.color}
             >
-              {area.title}
+              {isHovered ? `${area.title} · ${valueLabel}` : area.title}
             </text>
           </g>
         );
@@ -145,6 +188,9 @@ export default function RadarChart({
       <style>{`
         @keyframes radar-draw {
           to { stroke-dashoffset: 0; }
+        }
+        circle {
+          transition: r 0.15s ease-out;
         }
       `}</style>
     </svg>

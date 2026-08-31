@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CAPACITY_AREAS, type TrackId } from "@/lib/types";
 import { findCapacityStep, tracks } from "@/data/playbook";
 import { useChecks } from "@/lib/storage";
-import TopNavLinks from "./TopNavLinks";
+import Navbar from "./Navbar";
 import Breadcrumb from "./Breadcrumb";
 
 const PHASE_TRACKS: TrackId[] = ["etablera", "driva", "skala"];
@@ -46,33 +46,21 @@ export default function CapacityDashboard() {
 
   return (
     <div className="min-h-screen bg-page">
-      <header className="border-b border-line">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <span className="inline-block h-3 w-3 rounded-[3px] bg-brand" aria-hidden />
-            <span className="text-[17px] font-semibold text-brand">
-              Testbäddsguiden
-            </span>
-          </Link>
-          <div className="flex items-center gap-6">
-            <TopNavLinks />
-            <nav className="flex items-center gap-4 text-sm text-muted">
-              {PHASE_TRACKS.map((trackId) => (
-                <Link
-                  key={trackId}
-                  href={`/guide/${trackId}`}
-                  className="hover:text-ink transition-colors"
-                >
-                  {tracks[trackId].meta.shortName}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Navbar backHref="/guide/etablera" />
 
       <main className="max-w-4xl mx-auto px-6 pt-4 pb-24 md:pb-12 flex flex-col gap-10">
         <Breadcrumb items={[{ label: "Start", href: "/" }, { label: "Kapacitetsöversikt" }]} />
+        <nav className="flex items-center gap-4 text-sm text-muted -mt-4">
+          {PHASE_TRACKS.map((trackId) => (
+            <Link
+              key={trackId}
+              href={`/guide/${trackId}`}
+              className="hover:text-ink transition-colors"
+            >
+              {tracks[trackId].meta.shortName}
+            </Link>
+          ))}
+        </nav>
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-medium text-ink">Kapacitetsöversikt</h1>
           <p className="text-sm text-muted leading-relaxed max-w-xl">

@@ -1,10 +1,9 @@
 "use client";
 
-import Logo from "@/components/Logo";
+import Navbar from "@/components/Navbar";
 import StepNav from "@/components/StepNav";
 import StepContent from "@/components/StepContent";
 import AiPanel from "@/components/AiPanel";
-import TopNavLinks from "@/components/TopNavLinks";
 import Breadcrumb from "@/components/Breadcrumb";
 import { getTrack } from "@/data/playbook";
 import { useDoneSteps } from "@/lib/storage";
@@ -24,12 +23,7 @@ export default function StepPageClient({
 
   return (
     <div className="min-h-screen bg-page">
-      <header className="border-b border-line">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Logo showSubtitle={false} />
-          <TopNavLinks />
-        </div>
-      </header>
+      <Navbar backHref={`/guide/${meta.id}`} />
 
       <main className="max-w-6xl mx-auto px-6 pt-4 pb-24 md:pb-10 flex flex-col gap-6 md:gap-10">
         <Breadcrumb
