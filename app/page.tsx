@@ -11,9 +11,9 @@ import { useAssessmentAnswers } from "@/lib/storage";
 const DOTS = ["#E8750A", "#185FA5", "#2D7A4F", "#7B68D9"];
 
 const TRACK_PILLS = [
-  { emoji: "🟠", label: "Etablera testbädd", color: "#E8750A", href: "/guide/etablera" },
-  { emoji: "🔵", label: "Driva testbädd", color: "#185FA5", href: "/guide/driva" },
-  { emoji: "🟢", label: "Skala testbädd", color: "#2D7A4F", href: "/guide/skala" },
+  { label: "Etablera testbädd", color: "#E8750A", href: "/guide/etablera" },
+  { label: "Driva testbädd", color: "#185FA5", href: "/guide/driva" },
+  { label: "Skala testbädd", color: "#2D7A4F", href: "/guide/skala" },
 ];
 
 export default function Home() {
@@ -61,20 +61,13 @@ export default function Home() {
 
             <p className="text-[17px] text-muted leading-[1.65] mt-3">
               Ett metodstöd för dig som äger eller utvecklar en testbädd.
-              Börja med att bedöma var ni står — följ sedan guiden för att
-              stärka era förmågor.
+              Bedöm var ni står idag, se resultatet i en tydlig profil —
+              och följ sedan metodstödets steg för att stärka just era
+              utvecklingsområden.
             </p>
           </div>
 
-          <p
-            className="text-center text-sm leading-relaxed max-w-[480px] mx-auto mt-8"
-            style={{ color: "#5C5C5C" }}
-          >
-            Börja med att bedöma er förmåga — eller gå direkt till
-            metodstödet om ni redan vet var ni vill utvecklas.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-12">
             <motion.div
               whileHover={{ y: -2 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
@@ -141,7 +134,7 @@ export default function Home() {
                     className="inline-flex items-center gap-1.5 text-xs rounded-full bg-white px-3 py-1 hover:bg-black/[0.02] transition-colors"
                     style={{ border: `1px solid ${pill.color}`, color: pill.color }}
                   >
-                    {pill.emoji} {pill.label}
+                    {pill.label}
                   </Link>
                 ))}
               </div>

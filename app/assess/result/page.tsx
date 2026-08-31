@@ -343,6 +343,19 @@ export default function AssessResultPage() {
   useEffect(() => {
     if (didInitOpen.current || isEmpty) return;
     didInitOpen.current = true;
+
+    // Länkar hit (t.ex. "Från er bedömning"-chippen i metodstödet) pekar på
+    // #area-<id> — öppna och scrolla till det området istället för default.
+    const hashAreaId = window.location.hash.replace("#area-", "");
+    const linkedArea = assessmentAreas.find((a) => a.id === hashAreaId);
+    if (linkedArea) {
+      setOpenAreas({ [linkedArea.id]: true });
+      setTimeout(() => {
+        document.getElementById(`area-${linkedArea.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+      return;
+    }
+
     if (weakest) setOpenAreas({ [weakest.id]: true });
   }, [isEmpty, weakest]);
 

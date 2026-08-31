@@ -79,11 +79,10 @@ export default function GuideOverviewPage({
               <div key={phase.name} className="flex flex-col gap-2">
                 <div
                   className="flex items-center justify-between gap-3 pl-3"
-                  style={{ borderLeft: `2px solid ${phase.color}` }}
+                  style={{ borderLeft: `2px solid ${meta.color}` }}
                 >
                   <span
-                    className="text-[11px] font-medium uppercase tracking-[0.06em]"
-                    style={{ color: phase.color }}
+                    className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted"
                   >
                     {phase.name}
                   </span>
@@ -123,7 +122,7 @@ export default function GuideOverviewPage({
                         >
                           <span
                             className="text-sm font-medium w-5 shrink-0"
-                            style={{ color: phase.color }}
+                            style={{ color: meta.color }}
                           >
                             {i + 1}
                           </span>

@@ -68,7 +68,6 @@ export interface Track {
 /** En grupp av 2 steg som hör ihop tematiskt, för den fasindelade stegöversikten. */
 export interface TrackPhase {
   name: string;
-  color: string;
   estimate: string;
   stepIds: string[];
 }
