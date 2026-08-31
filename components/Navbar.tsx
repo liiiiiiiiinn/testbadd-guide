@@ -29,7 +29,6 @@ export default function Navbar({ backHref }: { backHref?: string }) {
 
         <div className="flex items-center gap-6">
           <TopNavLinks />
-          <span className="hidden sm:inline text-xs text-muted">Innovation Helsingborg</span>
         </div>
       </div>
     </header>
