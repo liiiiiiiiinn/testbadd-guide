@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check } from "lucide-react";
-import { ASSESSMENT_QUESTION_ID, RATING_LABELS, RATING_SCALE, type Track } from "@/lib/types";
+import { ASSESSMENT_QUESTION_ID, type Track } from "@/lib/types";
 import { getChecklistItems } from "@/data/playbook";
 import { useAnswers, useChecks } from "@/lib/storage";
 import Navbar from "./Navbar";
@@ -32,18 +32,14 @@ function buildMarkdown(track: Track, answers: ReturnType<typeof useAnswers>["ans
 
     if (step.measurementAreas) {
       const allPoints = getChecklistItems(step);
-      const ratedCount = allPoints.filter((_, i) => !!stepChecks[i]).length;
-      lines.push(`### Mätpunkter (${ratedCount}/${allPoints.length} bedömda)`);
+      const doneCount = allPoints.filter((_, i) => !!stepChecks[i]).length;
+      lines.push(`### Att klargöra (${doneCount}/${allPoints.length} klara)`);
       let cursor = 0;
       for (const area of step.measurementAreas) {
         lines.push("");
         lines.push(`**${area.title}**`);
         area.points.forEach((point, i) => {
-          const rating = stepChecks[cursor + i];
-          const ratingLabel = rating
-            ? `${rating}/4 – ${RATING_LABELS[rating as 1 | 2 | 3 | 4]}`
-            : "ej bedömd";
-          lines.push(`- ${point}: ${ratingLabel}`);
+          lines.push(`- [${stepChecks[cursor + i] ? "x" : " "}] ${point}`);
         });
         cursor += area.points.length;
       }
@@ -71,44 +67,7 @@ function buildMarkdown(track: Track, answers: ReturnType<typeof useAnswers>["ans
   return lines.join("\n");
 }
 
-/** Läsvänlig rad för en mätpunkt: fyllda prickar 1–4 + textetikett. */
-function RatingRow({
-  point,
-  rating,
-  color,
-}: {
-  point: string;
-  rating: number;
-  color: string;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 py-1.5 break-inside-avoid">
-      <p className="text-sm text-ink flex-1">{point}</p>
-      <div className="flex items-center gap-2 shrink-0">
-        <div className="flex items-center gap-1" aria-hidden>
-          {RATING_SCALE.map((value) => (
-            <span
-              key={value}
-              className="h-2.5 w-2.5 rounded-full"
-              style={{
-                backgroundColor: rating >= value ? color : "transparent",
-                border: `1.5px solid ${rating >= value ? color : "rgba(0,0,0,0.22)"}`,
-              }}
-            />
-          ))}
-        </div>
-        <span
-          className="text-xs w-28 text-right shrink-0"
-          style={{ color: rating ? "#1A1A1A" : "#9C9893", fontStyle: rating ? "normal" : "italic" }}
-        >
-          {rating ? `${rating}/4 – ${RATING_LABELS[rating as 1 | 2 | 3 | 4]}` : "Ej bedömd"}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/** Läsvänlig rad för en enkel checklistpunkt: bock eller tom cirkel. */
+/** Läsvänlig rad för en checklistpunkt: bock eller tom cirkel. */
 function ChecklistRow({ item, done, color }: { item: string; done: boolean; color: string }) {
   return (
     <div className="flex items-center gap-2.5 py-1.5 break-inside-avoid">
@@ -263,7 +222,7 @@ export default function ExportView({ track }: { track: Track }) {
               <div className="flex flex-col gap-3 pl-4">
                 <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted">
                   {step.measurementAreas
-                    ? `Mätpunkter (${doneCount}/${checklistItems.length} bedömda)`
+                    ? `Att klargöra (${doneCount}/${checklistItems.length} klara)`
                     : `Checklista (${doneCount}/${checklistItems.length} klara)`}
                 </p>
 
@@ -276,10 +235,10 @@ export default function ExportView({ track }: { track: Track }) {
                           <p className="text-sm font-medium text-ink">{area.title}</p>
                           <div className="flex flex-col divide-y divide-line/60">
                             {area.points.map((point, i) => (
-                              <RatingRow
+                              <ChecklistRow
                                 key={i}
-                                point={point}
-                                rating={stepChecks[startIndex + i] ?? 0}
+                                item={point}
+                                done={!!stepChecks[startIndex + i]}
                                 color={track.meta.color}
                               />
                             ))}

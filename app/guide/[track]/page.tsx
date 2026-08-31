@@ -52,13 +52,7 @@ export default function GuideOverviewPage({
           ]}
         />
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-end gap-4">
-            <Link
-              href="/dashboard"
-              className="text-xs text-muted hover:text-ink transition-colors"
-            >
-              Kapacitetsöversikt →
-            </Link>
+          <div className="flex items-center justify-end">
             <Link
               href={`/export/${meta.id}`}
               className="text-xs text-muted hover:text-ink transition-colors"

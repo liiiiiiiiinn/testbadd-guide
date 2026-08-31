@@ -884,14 +884,6 @@ export function getChecklistItems(step: Step): string[] {
   return step.checklist;
 }
 
-/** Steget i ett spår som bedömer ett givet kapacitetsområde, om något. */
-export function findCapacityStep(
-  trackId: TrackId,
-  areaId: string
-): Step | undefined {
-  return tracks[trackId].steps.find((s) => s.capacityArea === areaId);
-}
-
 // ─────────────────────────────────────────────────────────
 // FASINDELNING — varje spårs 8 steg grupperade i 4 tematiska
 // faser om 2 steg vardera, för stegöversiktens fasindelade vy.

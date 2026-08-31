@@ -88,21 +88,7 @@ export function useChecks(track: TrackId) {
     [key]
   );
 
-  const setRating = useCallback(
-    (stepId: string, index: number, rating: number) => {
-      setChecks((prev) => {
-        const stepChecks = { ...prev[stepId] };
-        // Klicka på samma betyg igen för att rensa bedömningen.
-        stepChecks[index] = stepChecks[index] === rating ? 0 : rating;
-        const next: ChecksState = { ...prev, [stepId]: stepChecks };
-        writeStorage(key, next);
-        return next;
-      });
-    },
-    [key]
-  );
-
-  return { checks, toggleCheck, setRating };
+  return { checks, toggleCheck };
 }
 
 // ─────────────────────────────────────────────────────────

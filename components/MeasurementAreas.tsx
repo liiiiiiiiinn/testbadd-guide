@@ -1,22 +1,22 @@
 "use client";
 
-import { RATING_LABELS, RATING_SCALE, type MeasurementArea } from "@/lib/types";
+import type { MeasurementArea } from "@/lib/types";
 
 interface MeasurementAreasProps {
   areas: MeasurementArea[];
   checked: Record<number, number>;
-  onRate: (index: number, rating: number) => void;
+  onToggle: (index: number) => void;
   color: string;
 }
 
 export default function MeasurementAreas({
   areas,
   checked,
-  onRate,
+  onToggle,
   color,
 }: MeasurementAreasProps) {
   const totalPoints = areas.reduce((sum, a) => sum + a.points.length, 0);
-  const ratedCount = Array.from({ length: totalPoints }, (_, i) => i).filter(
+  const doneCount = Array.from({ length: totalPoints }, (_, i) => i).filter(
     (i) => !!checked[i]
   ).length;
 
@@ -25,9 +25,9 @@ export default function MeasurementAreas({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-ink">Mätområden</h3>
+        <h3 className="text-sm font-medium text-ink">Att klargöra i detta steg</h3>
         <span className="text-xs text-muted">
-          {ratedCount}/{totalPoints} mätpunkter bedömda
+          {doneCount}/{totalPoints} klara
         </span>
       </div>
 
@@ -35,7 +35,7 @@ export default function MeasurementAreas({
         {areas.map((area) => {
           const startIndex = cursor;
           cursor += area.points.length;
-          const areaRated = area.points.filter(
+          const areaDone = area.points.filter(
             (_, i) => !!checked[startIndex + i]
           ).length;
 
@@ -44,61 +44,58 @@ export default function MeasurementAreas({
               <div className="flex items-baseline justify-between gap-3">
                 <p className="text-sm font-medium text-ink">{area.title}</p>
                 <span className="text-xs text-muted shrink-0">
-                  {areaRated}/{area.points.length}
+                  {areaDone}/{area.points.length}
                 </span>
               </div>
               <p className="text-xs text-muted leading-relaxed">
                 {area.description}
               </p>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {area.points.map((point, i) => {
                   const globalIndex = startIndex + i;
-                  const rating = checked[globalIndex] ?? 0;
+                  const isChecked = !!checked[globalIndex];
                   return (
-                    <div key={globalIndex} className="flex flex-col gap-1.5">
-                      <p className="text-sm text-ink">{point}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted w-10 shrink-0">
-                          Låg
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {RATING_SCALE.map((value) => {
-                            const isSelected = rating === value;
-                            return (
-                              <button
-                                key={value}
-                                type="button"
-                                onClick={() => onRate(globalIndex, value)}
-                                title={RATING_LABELS[value]}
-                                aria-pressed={isSelected}
-                                className={`h-6 w-6 rounded-full border text-[11px] font-medium transition-all duration-150 flex items-center justify-center hover:scale-110 ${
-                                  isSelected ? "rating-pop" : ""
-                                }`}
-                                style={{
-                                  borderColor: isSelected
-                                    ? color
-                                    : "rgba(0,0,0,0.2)",
-                                  backgroundColor: isSelected
-                                    ? color
-                                    : "transparent",
-                                  color: isSelected ? "#fff" : "#5C5C5C",
-                                }}
-                              >
-                                {value}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <span className="text-[10px] text-muted w-10 shrink-0">
-                          Hög
-                        </span>
-                        {rating > 0 && (
-                          <span className="text-xs text-muted">
-                            {RATING_LABELS[rating as 1 | 2 | 3 | 4]}
-                          </span>
+                    <label
+                      key={globalIndex}
+                      className="flex items-start gap-2.5 text-sm cursor-pointer select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => onToggle(globalIndex)}
+                        className="sr-only peer"
+                      />
+                      <span
+                        className={`mt-0.5 h-4 w-4 shrink-0 rounded-[3px] border flex items-center justify-center transition-colors ${
+                          isChecked ? "checkbox-pop" : ""
+                        }`}
+                        style={{
+                          borderColor: isChecked ? color : "rgba(0,0,0,0.25)",
+                          backgroundColor: isChecked ? color : "transparent",
+                        }}
+                        aria-hidden
+                      >
+                        {isChecked && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                            <path
+                              d="M1 4L3.5 6.5L9 1"
+                              stroke="white"
+                              strokeWidth="1.6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              style={{
+                                strokeDasharray: 12,
+                                strokeDashoffset: 12,
+                                animation: "draw-check 0.3s ease-out forwards",
+                              }}
+                            />
+                          </svg>
                         )}
-                      </div>
-                    </div>
+                      </span>
+                      <span className={isChecked ? "text-muted line-through" : "text-ink"}>
+                        {point}
+                      </span>
+                    </label>
                   );
                 })}
               </div>

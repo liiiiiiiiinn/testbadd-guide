@@ -18,7 +18,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     href: "/guide/etablera",
     label: "Metodstöd",
-    match: (p) => p.startsWith("/guide") || p.startsWith("/dashboard") || p.startsWith("/export"),
+    match: (p) => p.startsWith("/guide") || p.startsWith("/export"),
   },
   {
     href: "/assess/result",

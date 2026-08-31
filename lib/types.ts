@@ -3,18 +3,6 @@ export type TrackId = "etablera" | "driva" | "skala";
 /** De fyra kapacitetsområdena i testbäddsförmåga, i fast ordning. */
 export type CapacityAreaId = "infrastruktur" | "metoder" | "population" | "forvaltning";
 
-export interface CapacityAreaMeta {
-  id: CapacityAreaId;
-  name: string;
-}
-
-export const CAPACITY_AREAS: CapacityAreaMeta[] = [
-  { id: "infrastruktur", name: "Fysisk och digital infrastruktur" },
-  { id: "metoder", name: "Arbetssätt, metoder och processer" },
-  { id: "population", name: "Population och data" },
-  { id: "forvaltning", name: "Förvaltning, samverkan och kompetens" },
-];
-
 export interface Question {
   id: string;
   text: string;
@@ -88,22 +76,9 @@ export interface TrackPhase {
 export type AiButtonType = "formulera" | "granska" | "nastasteg";
 
 export type AnswersState = Record<string, Record<string, string>>;
-/**
- * Avbockning per steg och punktindex. Enkel checklista (`Step.checklist`)
- * använder 0/1 som av/på. Mätpunkter (`Step.measurementAreas`) använder
- * en skala 1 (låg) till 4 (hög); 0/saknas betyder obedömd.
- */
+/** Avbockning per steg och punktindex — 0/1 som av/på, för både `Step.checklist` och `Step.measurementAreas`. */
 export type ChecksState = Record<string, Record<number, number>>;
 export type DoneState = Record<string, boolean>;
-
-export const RATING_SCALE = [1, 2, 3, 4] as const;
-export type Rating = (typeof RATING_SCALE)[number];
-export const RATING_LABELS: Record<Rating, string> = {
-  1: "Låg",
-  2: "Delvis",
-  3: "Till stor del",
-  4: "Hög",
-};
 
 // ─────────────────────────────────────────────────────────
 // FÖRMÅGEBEDÖMNINGEN (/assess) — fristående diagnosflöde.

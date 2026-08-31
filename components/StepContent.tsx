@@ -24,7 +24,7 @@ export default function StepContent({
   const { meta, steps } = track;
   const step = steps[stepIndex];
   const { answers, setAnswer } = useAnswers(meta.id);
-  const { checks, toggleCheck, setRating } = useChecks(meta.id);
+  const { checks, toggleCheck } = useChecks(meta.id);
   const { done, setStepDone } = useDoneSteps(meta.id);
 
   const stepAnswers = answers[step.id] ?? {};
@@ -98,7 +98,7 @@ export default function StepContent({
           <MeasurementAreas
             areas={step.measurementAreas}
             checked={stepChecks}
-            onRate={(i, rating) => setRating(step.id, i, rating)}
+            onToggle={(i) => toggleCheck(step.id, i)}
             color={meta.color}
           />
         ) : (
