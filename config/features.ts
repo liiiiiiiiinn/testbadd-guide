@@ -1,6 +1,7 @@
 export const FEATURES = {
-  // false = metodstödet är dolt från startsida, navigation och
-  // resultatsida. Sidorna nås fortfarande via direkt-URL.
+  // false = metodstödets kort på startsidan och kopplingskortet på
+  // resultatsidan är dolda. Menyn (Metodstöd) visas alltid — det är
+  // bara dessa två extra genvägar som styrs av flaggan.
   showGuideEntrypoints: false,
 
   // 'playbook' = statisk läsvy utan interaktivitet
