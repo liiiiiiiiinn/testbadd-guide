@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { assessmentAreaForCapacity } from "@/data/assessment";
 import { computeAreaScore, useAssessmentAnswers } from "@/lib/storage";
+import { FEATURES } from "@/config/features";
 import type { CapacityAreaId } from "@/lib/types";
 
 export default function AbilityChip({ capacityArea }: { capacityArea: CapacityAreaId }) {
@@ -10,7 +11,7 @@ export default function AbilityChip({ capacityArea }: { capacityArea: CapacityAr
   const area = assessmentAreaForCapacity(capacityArea);
   const score = computeAreaScore(answers[area.id]);
 
-  if (score === null) return null;
+  if (!FEATURES.showGuideEntrypoints || score === null) return null;
 
   const isPriority = score < 2.5;
 

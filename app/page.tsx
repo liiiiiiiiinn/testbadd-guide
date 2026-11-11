@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
 import { assessmentAreas, countAnswered } from "@/data/assessment";
 import { useAssessmentAnswers } from "@/lib/storage";
+import { FEATURES } from "@/config/features";
 
 const DOTS = ["#E8750A", "#185FA5", "#2D7A4F", "#7B68D9"];
 
@@ -60,18 +61,25 @@ export default function Home() {
             </h1>
 
             <p className="text-[17px] text-muted leading-[1.65] mt-3">
-              Ett metodstöd för dig som äger eller utvecklar en testbädd.
-              Bedöm var ni står idag, se resultatet i en tydlig profil —
-              och följ sedan metodstödets steg för att stärka just era
-              utvecklingsområden.
+              {FEATURES.showGuideEntrypoints
+                ? "Ett metodstöd för dig som äger eller utvecklar en testbädd. Bedöm var ni står idag, se resultatet i en tydlig profil — och följ sedan metodstödets steg för att stärka just era utvecklingsområden."
+                : "Gör en strukturerad självskattning av era styrkor och utvecklingsområden, och få en tydlig profil att utgå från."}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-12">
+          <div
+            className={
+              FEATURES.showGuideEntrypoints
+                ? "grid grid-cols-1 md:grid-cols-2 gap-4 mt-12"
+                : "flex justify-center mt-12"
+            }
+          >
             <motion.div
               whileHover={{ y: -2 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
-              className="group rounded-2xl bg-white p-8 flex flex-col transition-colors duration-200 hover:bg-[#FFFAF6]"
+              className={`group rounded-2xl bg-white p-8 flex flex-col transition-colors duration-200 hover:bg-[#FFFAF6] ${
+                FEATURES.showGuideEntrypoints ? "" : "w-full max-w-[520px]"
+              }`}
               style={{
                 border: "1.5px solid #E8750A",
                 boxShadow: "0 0 0 rgba(232,117,10,0)",
@@ -111,52 +119,56 @@ export default function Home() {
               </Link>
             </motion.div>
 
-            <motion.div
-              whileHover={{ y: -2 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="group rounded-2xl bg-white p-8 flex flex-col transition-colors duration-200 hover:bg-[#FAFAF9]"
-              style={{ border: "1.5px solid #E8E5E0" }}
-            >
-              <Map size={28} color="#5C5C5C" strokeWidth={1.75} />
-              <h2 className="text-xl font-medium text-ink mt-5">
-                Följ metodstödet
-              </h2>
-              <p className="text-sm text-muted leading-[1.6] mt-2.5">
-                Välj det spår som passar er situation och arbeta igenom
-                stegen i er egen takt. Guiden hjälper er att omsätta
-                insikterna från bedömningen till konkret handling.
-              </p>
-              <div className="flex flex-wrap gap-2 mt-4">
-                {TRACK_PILLS.map((pill) => (
-                  <Link
-                    key={pill.label}
-                    href={pill.href}
-                    className="inline-flex items-center gap-1.5 text-xs rounded-full bg-white px-3 py-1 hover:bg-black/[0.02] transition-colors"
-                    style={{ border: `1px solid ${pill.color}`, color: pill.color }}
-                  >
-                    {pill.label}
-                  </Link>
-                ))}
-              </div>
-              <Link
-                href="/guide/etablera"
-                className="mt-6 w-full text-center text-ink text-[15px] font-medium rounded-[10px] py-3.5 bg-white transition-colors duration-200"
+            {FEATURES.showGuideEntrypoints && (
+              <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="group rounded-2xl bg-white p-8 flex flex-col transition-colors duration-200 hover:bg-[#FAFAF9]"
                 style={{ border: "1.5px solid #E8E5E0" }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#1A1A1A")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#E8E5E0")}
               >
-                Välj spår →
-              </Link>
-            </motion.div>
+                <Map size={28} color="#5C5C5C" strokeWidth={1.75} />
+                <h2 className="text-xl font-medium text-ink mt-5">
+                  Följ metodstödet
+                </h2>
+                <p className="text-sm text-muted leading-[1.6] mt-2.5">
+                  Välj det spår som passar er situation och arbeta igenom
+                  stegen i er egen takt. Guiden hjälper er att omsätta
+                  insikterna från bedömningen till konkret handling.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {TRACK_PILLS.map((pill) => (
+                    <Link
+                      key={pill.label}
+                      href={pill.href}
+                      className="inline-flex items-center gap-1.5 text-xs rounded-full bg-white px-3 py-1 hover:bg-black/[0.02] transition-colors"
+                      style={{ border: `1px solid ${pill.color}`, color: pill.color }}
+                    >
+                      {pill.label}
+                    </Link>
+                  ))}
+                </div>
+                <Link
+                  href="/guide/etablera"
+                  className="mt-6 w-full text-center text-ink text-[15px] font-medium rounded-[10px] py-3.5 bg-white transition-colors duration-200"
+                  style={{ border: "1.5px solid #E8E5E0" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#1A1A1A")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#E8E5E0")}
+                >
+                  Välj spår →
+                </Link>
+              </motion.div>
+            )}
           </div>
 
-          <div className="flex flex-col items-center gap-2 mt-8 max-w-[400px] mx-auto text-center">
-            <ArrowDown size={16} color="#D4D0CB" />
-            <p className="text-[13px] leading-relaxed" style={{ color: "#9C9893" }}>
-              Bedömningen och metodstödet hänger ihop. Spindeldiagrammet från
-              bedömningen följer med dig in i guiden.
-            </p>
-          </div>
+          {FEATURES.showGuideEntrypoints && (
+            <div className="flex flex-col items-center gap-2 mt-8 max-w-[400px] mx-auto text-center">
+              <ArrowDown size={16} color="#D4D0CB" />
+              <p className="text-[13px] leading-relaxed" style={{ color: "#9C9893" }}>
+                Bedömningen och metodstödet hänger ihop. Spindeldiagrammet
+                från bedömningen följer med dig in i guiden.
+              </p>
+            </div>
+          )}
         </main>
       </div>
     </PageTransition>

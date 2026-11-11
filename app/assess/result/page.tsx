@@ -11,6 +11,7 @@ import AreaBadge from "@/components/AreaBadge";
 import { assessmentAreas } from "@/data/assessment";
 import { tracks } from "@/data/playbook";
 import { useAssessmentAnswers, useAssessmentSnapshots, computeAllScores } from "@/lib/storage";
+import { FEATURES } from "@/config/features";
 import type { AssessmentArea, AssessmentAreaId, AssessmentQuestion, TrackId } from "@/lib/types";
 
 const RATING_LABELS_4 = ["", "Låg", "Delvis", "Till stor del", "Hög"];
@@ -631,30 +632,32 @@ export default function AssessResultPage() {
               )}
 
               {/* SEKTION 6 — KOPPLINGSKORT TILL METODSTÖDET */}
-              <div className="mt-12">
-                <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted mb-3">
-                  Vad gör ni nu?
-                </p>
-                <div
-                  className="rounded-2xl bg-white px-6 py-6 flex flex-col gap-3"
-                  style={{ border: "1.5px solid #E8750A" }}
-                >
-                  <span
-                    className="text-[10px] uppercase tracking-[0.08em] font-medium w-fit"
-                    style={{ color: recTrack.meta.color }}
+              {FEATURES.showGuideEntrypoints && (
+                <div className="mt-12">
+                  <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted mb-3">
+                    Vad gör ni nu?
+                  </p>
+                  <div
+                    className="rounded-2xl bg-white px-6 py-6 flex flex-col gap-3"
+                    style={{ border: "1.5px solid #E8750A" }}
                   >
-                    {recTrack.meta.name}
-                  </span>
-                  <p className="text-sm text-ink leading-relaxed">{rec.text}</p>
-                  <Link
-                    href={`/guide/${recTrack.meta.id}`}
-                    className="self-start mt-1 text-white text-sm font-medium rounded-[10px] px-5 py-2.5 transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: "#E8750A" }}
-                  >
-                    Gå till metodstödet →
-                  </Link>
+                    <span
+                      className="text-[10px] uppercase tracking-[0.08em] font-medium w-fit"
+                      style={{ color: recTrack.meta.color }}
+                    >
+                      {recTrack.meta.name}
+                    </span>
+                    <p className="text-sm text-ink leading-relaxed">{rec.text}</p>
+                    <Link
+                      href={`/guide/${recTrack.meta.id}`}
+                      className="self-start mt-1 text-white text-sm font-medium rounded-[10px] px-5 py-2.5 transition-opacity hover:opacity-90"
+                      style={{ backgroundColor: "#E8750A" }}
+                    >
+                      Gå till metodstödet →
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* SEKTION 7 — EXPORT */}
               <div className="no-print flex flex-wrap items-center justify-center gap-3 mt-12">

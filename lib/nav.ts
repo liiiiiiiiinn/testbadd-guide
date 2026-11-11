@@ -1,3 +1,5 @@
+import { FEATURES } from "@/config/features";
+
 export interface NavItem {
   href: string;
   label: string;
@@ -9,7 +11,7 @@ export interface NavItem {
  * (desktop-toppmeny och mobil bottennavigering), så att menyn
  * aldrig skiljer sig åt beroende på vilken sida man är på.
  */
-export const NAV_ITEMS: NavItem[] = [
+const ALL_NAV_ITEMS: NavItem[] = [
   {
     href: "/assess",
     label: "Bedöm förmåga",
@@ -26,3 +28,8 @@ export const NAV_ITEMS: NavItem[] = [
     match: (p) => p.startsWith("/assess/result"),
   },
 ];
+
+/** Menyn, med Metodstöd borttaget när FEATURES.showGuideEntrypoints är false. */
+export const NAV_ITEMS: NavItem[] = FEATURES.showGuideEntrypoints
+  ? ALL_NAV_ITEMS
+  : ALL_NAV_ITEMS.filter((item) => item.href !== "/guide/etablera");
