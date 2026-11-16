@@ -2,11 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "./Navbar";
 import PrintButton from "./PrintButton";
-import { getChecklistItems, getPhases, getTrack, isValidTrack, tracks } from "@/data/playbook";
+import { getChecklistItems, getTrack, isValidTrack, tracks } from "@/data/playbook";
 import type { TrackId } from "@/lib/types";
-
-/** Samma fyra fasfärger som tidigare användes i stegöversikten, bevarade här för playbook-vyn. */
-const PHASE_COLORS = ["#E8750A", "#185FA5", "#2D7A4F", "#7B68D9"];
 
 const TRACK_LINKS: { id: TrackId }[] = [
   { id: "etablera" },
@@ -20,7 +17,7 @@ export default function PlaybookView({ trackId }: { trackId: string }) {
   if (!track) notFound();
 
   const { meta, steps } = track;
-  const phases = getPhases(meta.id as TrackId);
+  const descriptionParagraphs = meta.description.split("\n\n");
 
   return (
     <div className="min-h-screen bg-page">
@@ -69,114 +66,104 @@ export default function PlaybookView({ trackId }: { trackId: string }) {
           </aside>
 
           <div className="max-w-[720px] flex flex-col gap-12">
-            <div className="flex flex-col gap-3 border-l-4 pl-5" style={{ borderColor: meta.color }}>
+            <div className="flex flex-col gap-4 border-l-4 pl-5" style={{ borderColor: meta.color }}>
               <span className="text-xs font-medium uppercase tracking-[0.06em]" style={{ color: meta.color }}>
                 Spår {meta.letter} · Playbook
               </span>
               <h1 className="text-[32px] font-medium text-ink leading-tight">{meta.name}</h1>
-              <p className="text-base text-muted leading-relaxed max-w-xl">{meta.description}</p>
+              {descriptionParagraphs.map((paragraph, i) => (
+                <p key={i} className="text-base text-muted leading-relaxed max-w-xl">
+                  {paragraph}
+                </p>
+              ))}
               <div className="no-print mt-2">
                 <PrintButton color={meta.color} />
               </div>
             </div>
 
             <div className="flex flex-col gap-14">
-              {phases.map((phase, phaseIndex) => {
-                const phaseColor = PHASE_COLORS[phaseIndex % PHASE_COLORS.length];
-                const phaseSteps = phase.stepIds
-                  .map((id) => steps.find((s) => s.id === id))
-                  .filter((s): s is (typeof steps)[number] => !!s);
+              {steps.map((step, globalIndex) => {
+                const checklistItems = getChecklistItems(step);
 
                 return (
-                  <div key={phase.name} className="flex flex-col gap-14">
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: phaseColor }}
-                        aria-hidden
-                      />
-                      <p
-                        className="text-xs font-medium uppercase tracking-[0.08em]"
-                        style={{ color: phaseColor }}
+                  <article
+                    key={step.id}
+                    id={step.id}
+                    className={`flex flex-col gap-5 scroll-mt-24 ${
+                      globalIndex > 0 ? "print-page-break" : ""
+                    }`}
+                  >
+                    <h2 className="text-2xl font-medium text-ink leading-snug">
+                      {globalIndex + 1}. {step.title}
+                    </h2>
+
+                    {step.intro && (
+                      <p className="text-[17px] text-ink leading-[1.7]">{step.intro}</p>
+                    )}
+
+                    {step.why && (
+                      <div
+                        className="rounded-md px-5 py-4 text-[15px] leading-[1.7] text-ink"
+                        style={{ backgroundColor: meta.light, borderLeft: `3px solid ${meta.color}` }}
                       >
-                        {phase.name} · {phase.estimate}
-                      </p>
-                    </div>
+                        <p className="text-xs font-medium mb-1.5" style={{ color: meta.color }}>
+                          Varför är detta viktigt?
+                        </p>
+                        <p>{step.why}</p>
+                      </div>
+                    )}
 
-                    {phaseSteps.map((step) => {
-                      const globalIndex = steps.findIndex((s) => s.id === step.id);
-                      const checklistItems = getChecklistItems(step);
+                    {step.measurementAreas && step.measurementAreas.length > 0 && (
+                      <div className="flex flex-col gap-3">
+                        {step.measurementAreas.map((area) => (
+                          <p key={area.id} className="text-[15px] text-ink leading-[1.7]">
+                            <strong className="font-medium">{area.title}.</strong>{" "}
+                            {area.description}
+                          </p>
+                        ))}
+                      </div>
+                    )}
 
-                      return (
-                        <article
-                          key={step.id}
-                          id={step.id}
-                          className={`flex flex-col gap-5 scroll-mt-24 ${
-                            globalIndex > 0 ? "print-page-break" : ""
-                          }`}
-                        >
-                          <h2 className="text-2xl font-medium text-ink leading-snug">
-                            {globalIndex + 1}. {step.title}
-                          </h2>
+                    {step.questions.length > 0 && (
+                      <ol className="flex flex-col gap-1.5 list-decimal list-inside">
+                        {step.questions.map((question) => (
+                          <li key={question.id} className="text-[15px] text-ink leading-[1.7]">
+                            {question.text}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
 
-                          <p className="text-[17px] text-ink leading-[1.7]">{step.intro}</p>
+                    {checklistItems.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <h3 className="text-sm font-medium text-ink">Checklista</h3>
+                        <ul className="flex flex-col gap-2">
+                          {checklistItems.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2.5 text-[15px] text-ink leading-[1.7]">
+                              <span
+                                className="mt-1.5 h-[9px] w-[9px] rounded-full border shrink-0"
+                                style={{ borderColor: "rgba(0,0,0,0.3)" }}
+                                aria-hidden
+                              />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
-                          <div
-                            className="rounded-md px-5 py-4 text-[15px] leading-[1.7] text-ink"
-                            style={{ backgroundColor: meta.light, borderLeft: `3px solid ${meta.color}` }}
-                          >
-                            <p className="text-xs font-medium mb-1.5" style={{ color: meta.color }}>
-                              Varför är detta viktigt?
-                            </p>
-                            <p>{step.why}</p>
-                          </div>
-
-                          {step.questions.length > 0 && (
-                            <div className="flex flex-col gap-2">
-                              <h3 className="text-sm font-medium text-ink">
-                                Frågor att reflektera över
-                              </h3>
-                              <ol className="flex flex-col gap-1.5 list-decimal list-inside">
-                                {step.questions.map((question) => (
-                                  <li key={question.id} className="text-[15px] text-ink leading-[1.7]">
-                                    {question.text}
-                                  </li>
-                                ))}
-                              </ol>
-                            </div>
-                          )}
-
-                          {checklistItems.length > 0 && (
-                            <div className="flex flex-col gap-2">
-                              <h3 className="text-sm font-medium text-ink">Checklista</h3>
-                              <ul className="flex flex-col gap-2">
-                                {checklistItems.map((item, i) => (
-                                  <li key={i} className="flex items-start gap-2.5 text-[15px] text-ink leading-[1.7]">
-                                    <span
-                                      className="mt-1.5 h-[9px] w-[9px] rounded-full border shrink-0"
-                                      style={{ borderColor: "rgba(0,0,0,0.3)" }}
-                                      aria-hidden
-                                    />
-                                    {item}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <div
-                            className="rounded-md px-5 py-4 text-[15px] leading-[1.7] text-ink"
-                            style={{ backgroundColor: "#EAF4EE" }}
-                          >
-                            <p className="text-xs font-medium mb-1.5" style={{ color: "#2D7A4F" }}>
-                              Du är klar när…
-                            </p>
-                            <p>{step.doneWhen}</p>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
+                    {step.doneWhen && (
+                      <div
+                        className="rounded-md px-5 py-4 text-[15px] leading-[1.7] text-ink"
+                        style={{ backgroundColor: "#EAF4EE" }}
+                      >
+                        <p className="text-xs font-medium mb-1.5" style={{ color: "#2D7A4F" }}>
+                          Du är klar när…
+                        </p>
+                        <p>{step.doneWhen}</p>
+                      </div>
+                    )}
+                  </article>
                 );
               })}
             </div>
