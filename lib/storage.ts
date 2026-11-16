@@ -9,6 +9,7 @@ import type {
   AssessmentSnapshot,
   ChecksState,
   DoneState,
+  TestbedInfo,
   TrackId,
 } from "./types";
 
@@ -213,15 +214,67 @@ export function useAssessmentSnapshots() {
     setSnapshots(readStorage<AssessmentSnapshot[]>(ASSESSMENT_SNAPSHOTS_KEY, []));
   }, []);
 
-  const addSnapshot = useCallback((scores: AssessmentSnapshot["scores"]) => {
+  const addSnapshot = useCallback(
+    (
+      scores: AssessmentSnapshot["scores"],
+      extra?: Pick<
+        AssessmentSnapshot,
+        "testbedName" | "functionRole" | "questionnaireVersion" | "answers"
+      >
+    ) => {
+      setSnapshots((prev) => {
+        const next = [...prev, { date: new Date().toISOString(), scores, ...extra }];
+        writeStorage(ASSESSMENT_SNAPSHOTS_KEY, next);
+        return next;
+      });
+    },
+    []
+  );
+
+  const removeSnapshot = useCallback((index: number) => {
     setSnapshots((prev) => {
-      const next = [...prev, { date: new Date().toISOString(), scores }];
+      const next = prev.filter((_, i) => i !== index);
       writeStorage(ASSESSMENT_SNAPSHOTS_KEY, next);
       return next;
     });
   }, []);
 
-  return { snapshots, addSnapshot };
+  const markSnapshotSubmitted = useCallback((index: number) => {
+    setSnapshots((prev) => {
+      const next = prev.map((s, i) =>
+        i === index ? { ...s, submittedAt: new Date().toISOString() } : s
+      );
+      writeStorage(ASSESSMENT_SNAPSHOTS_KEY, next);
+      return next;
+    });
+  }, []);
+
+  return { snapshots, addSnapshot, removeSnapshot, markSnapshotSubmitted };
+}
+
+// ─────────────────────────────────────────────────────────
+// Vilken testbädd och vilken funktion svararen har — visas överst på
+// /assess och följer med i Excel-raden. Egen, ny nyckel.
+// ─────────────────────────────────────────────────────────
+
+const TESTBED_INFO_KEY = "tbg_testbed_info";
+
+export function useTestbedInfo() {
+  const [info, setInfo] = useState<TestbedInfo>({ name: "", functionRole: "" });
+
+  useEffect(() => {
+    setInfo(readStorage<TestbedInfo>(TESTBED_INFO_KEY, { name: "", functionRole: "" }));
+  }, []);
+
+  const setTestbedInfo = useCallback((patch: Partial<TestbedInfo>) => {
+    setInfo((prev) => {
+      const next = { ...prev, ...patch };
+      writeStorage(TESTBED_INFO_KEY, next);
+      return next;
+    });
+  }, []);
+
+  return { info, setTestbedInfo };
 }
 
 export function useDoneSteps(track: TrackId) {
