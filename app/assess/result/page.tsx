@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, Target, ChevronDown, AlertTriangle, Mail, ExternalLink } from "lucide-react";
+import { TrendingUp, Target, ChevronDown, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -10,30 +10,37 @@ import RadarChart from "@/components/RadarChart";
 import AreaBadge from "@/components/AreaBadge";
 import { assessmentAreas } from "@/data/assessment";
 import { tracks } from "@/data/playbook";
-import { useAssessmentAnswers, useAssessmentSnapshots, useTestbedInfo } from "@/lib/storage";
-import { areaScorePct, totalScorePct, maturityLabel, questionPoints, type MaturityLabel } from "@/lib/scoring";
-import { buildExcelRow, excelHeaderRow } from "@/lib/exportRow";
+import { useAssessmentAnswers, useAssessmentSnapshots, computeAllScores } from "@/lib/storage";
 import { FEATURES } from "@/config/features";
-import { SITE } from "@/config/site";
-import type { AssessmentArea, AssessmentAreaId, AssessmentQuestion, AssessmentSnapshot, TrackId } from "@/lib/types";
+import type { AssessmentArea, AssessmentAreaId, AssessmentQuestion, TrackId } from "@/lib/types";
 
 const RATING_LABELS_4 = ["", "Låg", "Delvis", "Till stor del", "Hög"];
 
-const MATURITY_COLORS: Record<MaturityLabel, string> = {
-  Initialt: "#C0392B",
-  Etablerat: "#E8750A",
-  Definierat: "#C9A227",
-  Hanterat: "#6B9E5A",
-  Optimerande: "#2D7A4F",
-};
+const MATURITY_LEVELS = [
+  { max: 20, label: "Initialt", color: "#C0392B" },
+  { max: 40, label: "Etablerat", color: "#E8750A" },
+  { max: 60, label: "Definierat", color: "#C9A227" },
+  { max: 80, label: "Hanterat", color: "#6B9E5A" },
+  { max: 101, label: "Optimerande", color: "#2D7A4F" },
+];
 
-function maturityLevel(pct: number | null): { label: MaturityLabel; color: string } | null {
-  const label = maturityLabel(pct);
-  return label ? { label, color: MATURITY_COLORS[label] } : null;
+function maturityLevel(pct: number | null): { label: string; color: string } | null {
+  if (pct === null) return null;
+  return MATURITY_LEVELS.find((l) => pct < l.max) ?? MATURITY_LEVELS[MATURITY_LEVELS.length - 1];
 }
 
-function pctOf(pct: number | null): number | null {
-  return pct === null ? null : Math.round(pct);
+function pctOf(score: number | null): number | null {
+  return score === null ? null : Math.round((score / 4) * 100);
+}
+
+/** Normaliserad 0–4-poäng för en enskild fråga, för att kunna rangordna över hela bedömningen. Null = obesvarad, "vet ej" eller "ej relevant". */
+function questionScore(question: AssessmentQuestion, answer: { rating?: number; yesno?: string } | undefined): number | null {
+  if (!answer) return null;
+  if (question.type === "rating") return typeof answer.rating === "number" ? answer.rating : null;
+  if (answer.yesno === "ja") return 4;
+  if (answer.yesno === "delvis") return 2;
+  if (answer.yesno === "nej") return 0;
+  return null;
 }
 
 type Effort = { label: "Låg" | "Medel" | "Hög"; color: string };
@@ -161,21 +168,7 @@ function AnswerRow({ question, answer }: { question: AssessmentQuestion; answer:
   let labelColor = "#5C5C5C";
   let italic = false;
 
-  if (question.type === "rating" && (answer?.yesno === "vetej" || answer?.yesno === "ejrelevant")) {
-    // Skalfrågor kan ha fått "vet ej"/"ej relevant" istället för ett skalvärde.
-    const isVetEj = answer.yesno === "vetej";
-    icon = (
-      <span
-        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-base font-bold leading-none"
-        style={{ color: isVetEj ? "#9C9893" : "#C4C0BB" }}
-      >
-        {isVetEj ? "?" : "–"}
-      </span>
-    );
-    label = isVetEj ? "Vet ej" : "Ej relevant";
-    labelColor = isVetEj ? "#9C9893" : "#C4C0BB";
-    italic = true;
-  } else if (question.type === "rating") {
+  if (question.type === "rating") {
     const value = answer?.rating;
     const color =
       value === undefined
@@ -235,7 +228,7 @@ function AnswerRow({ question, answer }: { question: AssessmentQuestion; answer:
           >
             {label}
           </span>
-          {answer?.yesno === "vetej" && (
+          {question.type === "yesno" && answer?.yesno === "vetej" && (
             <span className="text-[10px] rounded-full bg-black/[0.05] text-muted px-2 py-0.5">
               Kunskapslucka
             </span>
@@ -322,48 +315,29 @@ function AreaSection({
 
 export default function AssessResultPage() {
   const { answers } = useAssessmentAnswers();
-  const { snapshots, addSnapshot, removeSnapshot, markSnapshotSubmitted } = useAssessmentSnapshots();
-  const { info, setTestbedInfo } = useTestbedInfo();
+  const { snapshots, addSnapshot } = useAssessmentSnapshots();
   const [showToast, setShowToast] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [copied, setCopied] = useState(false);
   const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({});
-  const [includeComments, setIncludeComments] = useState(true);
-  const [showRowPreview, setShowRowPreview] = useState(false);
-  const [rowCopied, setRowCopied] = useState(false);
-  const [viewingSnapshotIndex, setViewingSnapshotIndex] = useState<number | null>(null);
   const didInitOpen = useRef(false);
 
-  // Procentandel per område (0–100), enligt /lib/scoring.ts — samma regler
-  // som samordnarens Excelfil. "–" (null) om samtliga frågor i området är
-  // uteslutna (ej relevant/obesvarat).
-  const scoresPct: Record<AssessmentAreaId, number | null> = {
-    infrastruktur: areaScorePct(assessmentAreas[0], answers.infrastruktur),
-    metoder: areaScorePct(assessmentAreas[1], answers.metoder),
-    manniskor: areaScorePct(assessmentAreas[2], answers.manniskor),
-    forvaltning: areaScorePct(assessmentAreas[3], answers.forvaltning),
-  };
-  // 0–4-skala, bara för spindeldiagrammet och sparade mätningar (oförändrat
-  // lagringsformat — befintliga mätningar hos redan sparade användare ska
-  // fortsätta kunna läsas och jämföras).
-  const scores4: Record<AssessmentAreaId, number | null> = {
-    infrastruktur: scoresPct.infrastruktur === null ? null : (scoresPct.infrastruktur / 100) * 4,
-    metoder: scoresPct.metoder === null ? null : (scoresPct.metoder / 100) * 4,
-    manniskor: scoresPct.manniskor === null ? null : (scoresPct.manniskor / 100) * 4,
-    forvaltning: scoresPct.forvaltning === null ? null : (scoresPct.forvaltning / 100) * 4,
-  };
-
+  const scores = computeAllScores(answers);
   const scoredValues = assessmentAreas
-    .map((a) => scoresPct[a.id])
+    .map((a) => scores[a.id])
     .filter((v): v is number => v !== null);
-  const overallPct = pctOf(totalScorePct(assessmentAreas, answers));
+  const overallAvg =
+    scoredValues.length > 0
+      ? scoredValues.reduce((a, b) => a + b, 0) / scoredValues.length
+      : null;
+  const overallPct = pctOf(overallAvg);
   const overallMaturity = maturityLevel(overallPct);
   const isEmpty = scoredValues.length === 0;
 
   const ranked = [...assessmentAreas]
-    .filter((a) => scoresPct[a.id] !== null)
-    .sort((a, b) => (scoresPct[b.id] ?? 0) - (scoresPct[a.id] ?? 0));
+    .filter((a) => scores[a.id] !== null)
+    .sort((a, b) => (scores[b.id] ?? 0) - (scores[a.id] ?? 0));
   const strongest = ranked[0];
   const weakest = ranked[ranked.length - 1];
 
@@ -386,62 +360,41 @@ export default function AssessResultPage() {
     if (weakest) setOpenAreas({ [weakest.id]: true });
   }, [isEmpty, weakest]);
 
-  // Beräknas i webbläsaren vid sidvisning, inte vid bygget — annars visar
-  // sidan ett fast datum från den dag appen byggdes.
-  const [today, setToday] = useState<string | null>(null);
-  useEffect(() => {
-    setToday(
-      new Date().toLocaleDateString("sv-SE", { year: "numeric", month: "long", day: "numeric" })
-    );
-  }, []);
+  const today = new Date().toLocaleDateString("sv-SE", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
-  // Kunskapsluckor — alla "vet ej"-svar över samtliga områden (även på skalfrågor).
+  // Kunskapsluckor — alla "vet ej"-svar över samtliga områden.
   const knowledgeGaps: { area: AssessmentArea; question: AssessmentQuestion }[] = [];
   for (const area of assessmentAreas) {
     const areaAnswers = answers[area.id] ?? {};
     for (const question of area.questions) {
-      if (areaAnswers[question.id]?.yesno === "vetej") {
+      if (question.type === "yesno" && areaAnswers[question.id]?.yesno === "vetej") {
         knowledgeGaps.push({ area, question });
       }
     }
   }
 
-  // Tre prioriterade frågor — lägst poäng (0–3), exkl. ej relevant/obesvarat.
+  // Tre prioriterade frågor — lägst normaliserad poäng, exkl. obesvarat/vet ej/ej relevant.
   const scoredQuestions: { area: AssessmentArea; question: AssessmentQuestion; score: number }[] = [];
   for (const area of assessmentAreas) {
     const areaAnswers = answers[area.id] ?? {};
     for (const question of area.questions) {
-      const s = questionPoints(question, areaAnswers[question.id]);
+      const s = questionScore(question, areaAnswers[question.id]);
       if (s !== null) scoredQuestions.push({ area, question, score: s });
     }
   }
   const priorityQuestions = [...scoredQuestions].sort((a, b) => a.score - b.score).slice(0, 3);
 
-  const rec = recommendation(scores4);
+  const rec = recommendation(scores);
   const recTrack = tracks[rec.trackId];
 
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const excelRow = buildExcelRow(
-    {
-      testbedName: info.name,
-      functionRole: info.functionRole,
-      date: todayIso,
-      questionnaireVersion: SITE.questionnaireVersion,
-      answers,
-    },
-    { includeComments }
-  );
-
   function handleSaveSnapshot() {
-    if (isEmpty) return;
     setSaveState("saving");
     setTimeout(() => {
-      addSnapshot(scores4, {
-        testbedName: info.name,
-        functionRole: info.functionRole,
-        questionnaireVersion: SITE.questionnaireVersion,
-        answers,
-      });
+      addSnapshot(scores);
       setSaveState("saved");
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
@@ -449,41 +402,15 @@ export default function AssessResultPage() {
     }, 500);
   }
 
-  async function copyToClipboard(text: string): Promise<boolean> {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   async function handleCopySummary() {
-    const markdown = buildAssessmentMarkdown(scores4, answers);
-    if (await copyToClipboard(markdown)) {
+    const markdown = buildAssessmentMarkdown(scores, answers);
+    try {
+      await navigator.clipboard.writeText(markdown);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard otillgänglig i denna miljö
     }
-  }
-
-  async function handleCopyExcelRow() {
-    if (await copyToClipboard(excelRow)) {
-      setRowCopied(true);
-      setTimeout(() => setRowCopied(false), 2500);
-    }
-  }
-
-  function snapshotExcelRow(snapshot: AssessmentSnapshot): string {
-    return buildExcelRow(
-      {
-        testbedName: snapshot.testbedName ?? info.name,
-        functionRole: snapshot.functionRole ?? info.functionRole,
-        date: snapshot.date.slice(0, 10),
-        questionnaireVersion: snapshot.questionnaireVersion ?? SITE.questionnaireVersion,
-        answers: snapshot.answers ?? answers,
-      },
-      { includeComments: true }
-    );
   }
 
   return (
@@ -513,7 +440,7 @@ export default function AssessResultPage() {
 
           {isEmpty ? (
             <div className="flex flex-col items-center gap-6 mt-10">
-              <RadarChart scores={scores4} />
+              <RadarChart scores={scores} />
               <p className="text-sm text-muted text-center max-w-sm">
                 Fyll i bedömningen för att se er förmågeprofil →
               </p>
@@ -553,7 +480,7 @@ export default function AssessResultPage() {
                   <span className="text-xs text-muted">Starkaste område</span>
                   {strongest ? (
                     <span className="text-sm font-medium" style={{ color: "#2D7A4F" }}>
-                      {strongest.title} · {pctOf(scoresPct[strongest.id])}%
+                      {strongest.title} · {pctOf(scores[strongest.id])}%
                     </span>
                   ) : (
                     <span className="text-sm text-muted">–</span>
@@ -567,7 +494,7 @@ export default function AssessResultPage() {
                   <span className="text-xs text-muted">Störst potential</span>
                   {weakest ? (
                     <span className="text-sm font-medium" style={{ color: "#E8750A" }}>
-                      {weakest.title} · {pctOf(scoresPct[weakest.id])}%
+                      {weakest.title} · {pctOf(scores[weakest.id])}%
                     </span>
                   ) : (
                     <span className="text-sm text-muted">–</span>
@@ -578,7 +505,7 @@ export default function AssessResultPage() {
               {/* SEKTION 2 — SPINDELDIAGRAM */}
               <div className="mt-12">
                 <RadarChart
-                  scores={scores4}
+                  scores={scores}
                   ghosts={showCompare ? snapshots.map((s) => s.scores) : []}
                   interactive
                 />
@@ -587,7 +514,7 @@ export default function AssessResultPage() {
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
                   {assessmentAreas.map((area) => {
-                    const pct = pctOf(scoresPct[area.id]);
+                    const pct = pctOf(scores[area.id]);
                     return (
                       <a
                         key={area.id}
@@ -631,7 +558,7 @@ export default function AssessResultPage() {
                       key={area.id}
                       area={area}
                       answers={answers[area.id]}
-                      score={scoresPct[area.id]}
+                      score={scores[area.id]}
                       isOpen={!!openAreas[area.id]}
                       onToggle={() =>
                         setOpenAreas((prev) => ({ ...prev, [area.id]: !prev[area.id] }))
@@ -704,260 +631,7 @@ export default function AssessResultPage() {
                 </div>
               )}
 
-              {/* SEKTION 6 — SKICKA IN TILL SAMORDNAREN */}
-              {FEATURES.enableSubmit && (
-                <div className="no-print mt-12">
-                  <div
-                    className="rounded-2xl bg-white px-6 py-6 flex flex-col gap-5"
-                    style={{ border: "0.5px solid #E8E5E0" }}
-                  >
-                    <div>
-                      <h2 className="text-base font-medium text-ink">
-                        Skicka in till samordnaren
-                      </h2>
-                      <p className="text-sm text-muted mt-1 leading-relaxed">
-                        Samordnaren följer hur testbäddsförmågan utvecklas i hela nätverket.
-                        Det är frivilligt och tar under en minut.
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <span className="text-xs font-medium text-muted">1. Kontrollera</span>
-                      {info.name.trim() ? (
-                        <p className="text-sm text-ink">
-                          Testbädd: <strong className="font-medium">{info.name}</strong>
-                        </p>
-                      ) : (
-                        <div className="flex flex-col gap-1.5">
-                          <label htmlFor="submit-testbed-name" className="text-sm text-ink">
-                            Testbäddens namn saknas — fyll i det för att kunna skicka in:
-                          </label>
-                          <input
-                            id="submit-testbed-name"
-                            type="text"
-                            value={info.name}
-                            onChange={(e) => setTestbedInfo({ name: e.target.value })}
-                            placeholder="T.ex. Testbädd för hållbar mobilitet"
-                            className="rounded-lg bg-page border-none px-3 py-2.5 text-sm text-ink placeholder:text-muted/60 focus:outline-none focus:ring-1"
-                          />
-                        </div>
-                      )}
-
-                      <label className="flex items-center gap-2.5 mt-2 text-sm text-ink cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={includeComments}
-                          onChange={(e) => setIncludeComments(e.target.checked)}
-                          className="h-4 w-4"
-                        />
-                        Ta med mina kommentarer
-                      </label>
-                      {includeComments && (
-                        <p className="text-xs" style={{ color: "#C9A227" }}>
-                          Kommentarer kan innehålla personuppgifter. Granska innan ni skickar.
-                        </p>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => setShowRowPreview((v) => !v)}
-                        className="self-start text-xs text-muted hover:text-ink transition-colors underline"
-                      >
-                        {showRowPreview ? "Dölj förhandsvisning" : "Visa förhandsvisning av raden"}
-                      </button>
-                      {showRowPreview && (
-                        <div className="rounded-lg bg-page px-3 py-3 text-xs text-ink overflow-x-auto">
-                          <p className="text-muted mb-1">{excelHeaderRow().replace(/\t/g, " · ")}</p>
-                          <p className="font-mono whitespace-pre">{excelRow.replace(/\t/g, " · ")}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <span className="text-xs font-medium text-muted">
-                        2. Kopiera raden
-                      </span>
-                      <button
-                        onClick={handleCopyExcelRow}
-                        disabled={!info.name.trim()}
-                        className="self-start text-sm font-medium rounded-[10px] px-5 py-2.5 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                        style={{ backgroundColor: "#185FA5" }}
-                      >
-                        {rowCopied ? "Raden är kopierad ✓" : "Kopiera som Excel-rad"}
-                      </button>
-                      {!info.name.trim() && (
-                        <p className="text-xs text-muted">
-                          Fyll i testbäddens namn ovan för att kunna kopiera raden.
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <span className="text-xs font-medium text-muted">3. Skicka raden</span>
-                      <p className="text-sm text-muted leading-relaxed">
-                        Skicka raden till samordnaren (e-post, Teams eller formuläret).
-                        Samordnaren klistrar in den i Excelfilen.
-                      </p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {SITE.submitFormUrl && (
-                          <a
-                            href={SITE.submitFormUrl}
-                            target="_blank"
-                            rel="noopener"
-                            className="inline-flex items-center gap-1.5 text-sm font-medium rounded-[10px] px-4 py-2.5 border border-line bg-white text-ink hover:border-ink transition-colors"
-                          >
-                            <ExternalLink size={14} />
-                            Öppna formuläret
-                          </a>
-                        )}
-                        {SITE.coordinatorEmail && (
-                          <a
-                            href={`mailto:${SITE.coordinatorEmail}?subject=${encodeURIComponent(
-                              `Testbäddsförmåga – ${info.name || "Namn saknas"} – ${todayIso}`
-                            )}&body=${encodeURIComponent(excelRow)}`}
-                            className="inline-flex items-center gap-1.5 text-sm font-medium rounded-[10px] px-4 py-2.5 border border-line bg-white text-ink hover:border-ink transition-colors"
-                          >
-                            <Mail size={14} />
-                            Skicka via e-post
-                          </a>
-                        )}
-                      </div>
-                    </div>
-
-                    <label className="flex items-center gap-2.5 text-sm text-ink cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={!!snapshots.at(-1)?.submittedAt}
-                        onChange={() => {
-                          if (snapshots.length === 0) return;
-                          markSnapshotSubmitted(snapshots.length - 1);
-                        }}
-                        disabled={snapshots.length === 0}
-                        className="h-4 w-4"
-                      />
-                      Jag har skickat in
-                    </label>
-                    {snapshots.at(-1)?.submittedAt && (
-                      <span
-                        className="w-fit text-[11px] font-medium rounded-full px-2.5 py-1"
-                        style={{ backgroundColor: "#EAF4EE", color: "#2D7A4F" }}
-                      >
-                        Inskickad{" "}
-                        {new Date(snapshots.at(-1)!.submittedAt!).toLocaleDateString("sv-SE")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* SEKTION 7 — EXPORT */}
-              <div className="no-print flex flex-wrap items-center justify-center gap-3 mt-12">
-                <button
-                  onClick={handleSaveSnapshot}
-                  disabled={saveState !== "idle"}
-                  className="text-sm font-medium rounded-[10px] px-5 py-2.5 border border-line bg-white text-ink hover:border-ink transition-colors disabled:opacity-70"
-                >
-                  {saveState === "saving" ? "Sparar..." : saveState === "saved" ? "Sparat ✓" : "💾 Spara mätning"}
-                </button>
-                <button
-                  onClick={handleCopySummary}
-                  className="text-sm font-medium rounded-[10px] px-5 py-2.5 border border-line bg-white text-ink hover:border-ink transition-colors"
-                >
-                  {copied ? "Kopierat ✓" : "📋 Kopiera sammanfattning"}
-                </button>
-                <button
-                  onClick={() => window.print()}
-                  className="text-sm font-medium rounded-[10px] px-5 py-2.5 border border-line bg-white text-ink hover:border-ink transition-colors"
-                >
-                  🖨 Skriv ut
-                </button>
-              </div>
-
-              {snapshots.length > 0 && (
-                <div className="no-print mt-8">
-                  <h3 className="text-sm font-medium text-ink mb-3 text-center">
-                    Tidigare mätningar
-                  </h3>
-                  <div className="flex flex-col gap-2">
-                    {snapshots
-                      .map((snapshot, i) => ({ snapshot, i }))
-                      .reverse()
-                      .map(({ snapshot, i }) => {
-                        const values = assessmentAreas
-                          .map((a) => snapshot.scores[a.id])
-                          .filter((v): v is number => v !== null);
-                        const avgPct =
-                          values.length > 0
-                            ? Math.round((values.reduce((a, b) => a + b, 0) / values.length / 4) * 100)
-                            : null;
-                        return (
-                          <div
-                            key={i}
-                            className="rounded-xl bg-white px-5 py-3 flex flex-wrap items-center justify-between gap-3"
-                            style={{ border: "0.5px solid #E8E5E0" }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm text-ink">
-                                {new Date(snapshot.date).toLocaleDateString("sv-SE")}
-                              </span>
-                              <span className="text-sm font-medium text-ink">
-                                {avgPct !== null ? `${avgPct}%` : "–"}
-                              </span>
-                              {snapshot.submittedAt && (
-                                <span
-                                  className="text-[11px] font-medium rounded-full px-2 py-0.5"
-                                  style={{ backgroundColor: "#EAF4EE", color: "#2D7A4F" }}
-                                >
-                                  Inskickad
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() =>
-                                  setViewingSnapshotIndex((prev) => (prev === i ? null : i))
-                                }
-                                className="text-xs font-medium text-muted hover:text-ink transition-colors"
-                              >
-                                {viewingSnapshotIndex === i ? "Dölj" : "Visa"}
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  if (!snapshot.answers) return;
-                                  await copyToClipboard(snapshotExcelRow(snapshot));
-                                }}
-                                disabled={!snapshot.answers}
-                                className="text-xs font-medium text-muted hover:text-ink transition-colors disabled:opacity-40"
-                              >
-                                Kopiera som Excel-rad
-                              </button>
-                              <button
-                                onClick={() => removeSnapshot(i)}
-                                className="text-xs font-medium text-muted hover:text-ink transition-colors"
-                              >
-                                Ta bort
-                              </button>
-                            </div>
-                            {viewingSnapshotIndex === i && (
-                              <div className="w-full flex flex-wrap gap-2 pt-2 border-t border-line">
-                                {assessmentAreas.map((area) => (
-                                  <span key={area.id} className="text-xs text-muted">
-                                    {area.title}:{" "}
-                                    {snapshot.scores[area.id] !== null
-                                      ? `${Math.round((snapshot.scores[area.id]! / 4) * 100)}%`
-                                      : "–"}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              )}
-
-              {/* SEKTION 8 — KOPPLINGSKORT TILL METODSTÖDET */}
+              {/* SEKTION 6 — KOPPLINGSKORT TILL METODSTÖDET */}
               {FEATURES.showGuideEntrypoints && (
                 <div className="mt-12">
                   <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted mb-3">
@@ -984,6 +658,29 @@ export default function AssessResultPage() {
                   </div>
                 </div>
               )}
+
+              {/* SEKTION 7 — EXPORT */}
+              <div className="no-print flex flex-wrap items-center justify-center gap-3 mt-12">
+                <button
+                  onClick={handleSaveSnapshot}
+                  disabled={saveState !== "idle"}
+                  className="text-sm font-medium rounded-[10px] px-5 py-2.5 border border-line bg-white text-ink hover:border-ink transition-colors disabled:opacity-70"
+                >
+                  {saveState === "saving" ? "Sparar..." : saveState === "saved" ? "Sparat ✓" : "💾 Spara mätning"}
+                </button>
+                <button
+                  onClick={handleCopySummary}
+                  className="text-sm font-medium rounded-[10px] px-5 py-2.5 border border-line bg-white text-ink hover:border-ink transition-colors"
+                >
+                  {copied ? "Kopierat ✓" : "📋 Kopiera sammanfattning"}
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="text-sm font-medium rounded-[10px] px-5 py-2.5 border border-line bg-white text-ink hover:border-ink transition-colors"
+                >
+                  🖨 Skriv ut
+                </button>
+              </div>
             </>
           )}
         </main>

@@ -7,7 +7,4 @@ export const FEATURES = {
   // 'playbook' = statisk läsvy utan interaktivitet
   // 'interactive' = nuvarande ifyllnadsbara guide
   guideMode: "playbook" as "playbook" | "interactive",
-
-  // false = döljer "Skicka in till samordnaren"-blocket på resultatsidan.
-  enableSubmit: true,
 };

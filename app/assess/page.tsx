@@ -7,19 +7,10 @@ import PageTransition from "@/components/PageTransition";
 import Breadcrumb from "@/components/Breadcrumb";
 import AreaIcon from "@/components/AreaIcon";
 import { assessmentAreas, countAnswered } from "@/data/assessment";
-import { useAssessmentAnswers, useTestbedInfo } from "@/lib/storage";
-
-const FUNCTION_OPTIONS = [
-  "Verksamhetsansvarig",
-  "Chef",
-  "Medarbetare",
-  "Innovationsstrateg",
-  "Annat",
-];
+import { useAssessmentAnswers } from "@/lib/storage";
 
 export default function AssessOverviewPage() {
   const { answers } = useAssessmentAnswers();
-  const { info, setTestbedInfo } = useTestbedInfo();
 
   const progress = assessmentAreas.map((area) => {
     const answered = countAnswered(area, answers[area.id]);
@@ -59,47 +50,6 @@ export default function AssessOverviewPage() {
                 <PauseCircle size={13} />
                 Kan pausas
               </span>
-            </div>
-          </div>
-
-          <div
-            className="rounded-2xl bg-white p-6 mt-10 max-w-lg mx-auto flex flex-col gap-4"
-            style={{ border: "0.5px solid #E8E5E0" }}
-          >
-            <h2 className="text-sm font-medium text-ink">Om er testbädd</h2>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="testbed-name" className="text-xs text-muted">
-                Vilken testbädd gäller svaren?
-              </label>
-              <input
-                id="testbed-name"
-                type="text"
-                value={info.name}
-                onChange={(e) => setTestbedInfo({ name: e.target.value })}
-                placeholder="T.ex. Testbädd för hållbar mobilitet"
-                className="rounded-lg bg-page border-none px-3 py-2.5 text-sm text-ink placeholder:text-muted/60 focus:outline-none focus:ring-1"
-              />
-              <p className="text-xs text-muted">
-                Namnet behövs så att samordnaren vet vilken testbädd svaren gäller.
-              </p>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="testbed-function" className="text-xs text-muted">
-                Er funktion
-              </label>
-              <select
-                id="testbed-function"
-                value={info.functionRole}
-                onChange={(e) => setTestbedInfo({ functionRole: e.target.value })}
-                className="rounded-lg bg-page border-none px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-1"
-              >
-                <option value="">Välj...</option>
-                {FUNCTION_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
             </div>
           </div>
 

@@ -63,11 +63,7 @@ export default function Home() {
             <p className="text-[17px] text-muted leading-[1.65] mt-3">
               {FEATURES.showGuideEntrypoints
                 ? "Ett metodstöd för dig som äger eller utvecklar en testbädd. Bedöm var ni står idag, se resultatet i en tydlig profil — och följ sedan metodstödets steg för att stärka just era utvecklingsområden."
-                : "En kort självskattning för er som äger eller utvecklar en testbädd. Det tar 5–10 minuter och ni kan pausa när ni vill."}
-            </p>
-            <p className="text-[13px] mt-4 max-w-[420px]" style={{ color: "#9C9893" }}>
-              Era svar sparas bara i er egen webbläsare. Inget lämnar er dator förrän ni
-              själva väljer att skicka in.
+                : "Gör en strukturerad självskattning av era styrkor och utvecklingsområden, och få en tydlig profil att utgå från."}
             </p>
           </div>
 

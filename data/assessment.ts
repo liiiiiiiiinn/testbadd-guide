@@ -266,8 +266,6 @@ export function isQuestionAnswered(
   answer: AssessmentAnswer | undefined
 ): boolean {
   if (!answer) return false;
-  // "Vet ej"/"Ej relevant" kan även sättas på skalfrågor (ersätter skalvärdet).
-  if (answer.yesno === "vetej" || answer.yesno === "ejrelevant") return true;
   if (question.type === "rating") return typeof answer.rating === "number";
   return !!answer.yesno;
 }
