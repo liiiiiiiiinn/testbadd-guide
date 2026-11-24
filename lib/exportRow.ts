@@ -8,6 +8,9 @@ export interface MeasurementForExport {
   date: string;
   questionnaireVersion: string;
   answers: AssessmentAnswersState;
+  /** Valfria taggar (se /config/tags.ts) — tom sträng om inget valt. */
+  tag1?: string;
+  tag2?: string;
 }
 
 const YESNO_LABEL: Record<string, string> = {
@@ -49,8 +52,10 @@ function buildComments(answers: AssessmentAnswersState): string {
 
 /**
  * Bygger den tabbseparerade Excel-raden samordnaren klistrar in, i exakt
- * 33 fält: Testbädd, Funktion, Datum, Frågeversion, INF1–7, MET1–7,
- * MAN1–7, FOR1–7, Kommentarer. Se /docs/EXCEL_KOPPLING.md.
+ * 35 fält: Testbädd, Funktion, Datum, Frågeversion, INF1–7, MET1–7,
+ * MAN1–7, FOR1–7, Kommentarer, Tagg 1, Tagg 2. De första 33 fälten (t.o.m.
+ * Kommentarer) har en fast ordning som aldrig ändras — taggarna läggs
+ * alltid sist. Se /docs/EXCEL_KOPPLING.md.
  */
 export function buildExcelRow(
   measurement: MeasurementForExport,
@@ -69,6 +74,8 @@ export function buildExcelRow(
   }
 
   fields.push(includeComments ? buildComments(measurement.answers) : "");
+  fields.push(sanitize(measurement.tag1 ?? ""));
+  fields.push(sanitize(measurement.tag2 ?? ""));
 
   return fields.join("\t");
 }
@@ -76,6 +83,6 @@ export function buildExcelRow(
 export function excelHeaderRow(): string {
   const header = ["Testbädd", "Funktion", "Datum", "Frågeversion"];
   for (const field of EXPORT_FIELDS) header.push(field.code);
-  header.push("Kommentarer");
+  header.push("Kommentarer", "Tagg 1", "Tagg 2");
   return header.join("\t");
 }

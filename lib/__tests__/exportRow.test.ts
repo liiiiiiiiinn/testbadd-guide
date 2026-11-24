@@ -14,9 +14,35 @@ function emptyMeasurement(answers: AssessmentAnswersState = {}) {
 }
 
 describe("buildExcelRow", () => {
-  it("has exactly 33 tab-separated fields", () => {
+  it("has exactly 35 tab-separated fields", () => {
     const row = buildExcelRow(emptyMeasurement(), { includeComments: true });
-    expect(row.split("\t")).toHaveLength(33);
+    expect(row.split("\t")).toHaveLength(35);
+  });
+
+  it("never reorders the first 33 fields when tags are added", () => {
+    const withTags = buildExcelRow(
+      { ...emptyMeasurement(), tag1: "Vård och omsorg", tag2: "Ny" },
+      { includeComments: true }
+    );
+    const withoutTags = buildExcelRow(emptyMeasurement(), { includeComments: true });
+    expect(withTags.split("\t").slice(0, 33)).toEqual(withoutTags.split("\t").slice(0, 33));
+  });
+
+  it("puts the tags in fields 34 and 35, exactly as given and with no stray whitespace", () => {
+    const fields = buildExcelRow(
+      { ...emptyMeasurement(), tag1: "  Vård och omsorg  ", tag2: "Ny" },
+      { includeComments: true }
+    ).split("\t");
+    expect(fields[33]).toBe("Vård och omsorg");
+    expect(fields[34]).toBe("Ny");
+  });
+
+  it("leaves both tag fields empty (but keeps the trailing tabs) when nothing is chosen", () => {
+    const row = buildExcelRow(emptyMeasurement(), { includeComments: true });
+    const fields = row.split("\t");
+    expect(fields[33]).toBe("");
+    expect(fields[34]).toBe("");
+    expect(row.endsWith("\t\t")).toBe(true);
   });
 
   it("has the 28 question codes in INF→MET→MAN→FOR order with 7 each", () => {
@@ -72,7 +98,7 @@ describe("buildExcelRow", () => {
       forvaltning: {},
     };
     const row = buildExcelRow(emptyMeasurement(answers), { includeComments: true });
-    const commentsField = row.split("\t").at(-1);
+    const commentsField = row.split("\t")[32];
     expect(commentsField).toBe(
       "[INF1] En rad med tab och radbrytning | [MET1] En annan kommentar"
     );
@@ -86,7 +112,7 @@ describe("buildExcelRow", () => {
       forvaltning: {},
     };
     const row = buildExcelRow(emptyMeasurement(answers), { includeComments: false });
-    expect(row.split("\t").at(-1)).toBe("");
+    expect(row.split("\t")[32]).toBe("");
     expect(row).not.toContain("Hemlig kommentar");
   });
 

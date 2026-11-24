@@ -219,7 +219,7 @@ export function useAssessmentSnapshots() {
       scores: AssessmentSnapshot["scores"],
       extra?: Pick<
         AssessmentSnapshot,
-        "testbedName" | "functionRole" | "questionnaireVersion" | "answers"
+        "testbedName" | "functionRole" | "tag1" | "tag2" | "questionnaireVersion" | "answers"
       >
     ) => {
       setSnapshots((prev) => {
@@ -258,12 +258,15 @@ export function useAssessmentSnapshots() {
 // ─────────────────────────────────────────────────────────
 
 const TESTBED_INFO_KEY = "tbg_testbed_info";
+const EMPTY_TESTBED_INFO: TestbedInfo = { name: "", functionRole: "", tag1: "", tag2: "" };
 
 export function useTestbedInfo() {
-  const [info, setInfo] = useState<TestbedInfo>({ name: "", functionRole: "" });
+  const [info, setInfo] = useState<TestbedInfo>(EMPTY_TESTBED_INFO);
 
   useEffect(() => {
-    setInfo(readStorage<TestbedInfo>(TESTBED_INFO_KEY, { name: "", functionRole: "" }));
+    // Sammanfogas med tomma standardvärden så att redan sparad info (från
+    // innan taggarna fanns) inte saknar tag1/tag2 som fält.
+    setInfo({ ...EMPTY_TESTBED_INFO, ...readStorage<Partial<TestbedInfo>>(TESTBED_INFO_KEY, {}) });
   }, []);
 
   const setTestbedInfo = useCallback((patch: Partial<TestbedInfo>) => {

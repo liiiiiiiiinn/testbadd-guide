@@ -428,6 +428,8 @@ export default function AssessResultPage() {
       date: todayIso,
       questionnaireVersion: SITE.questionnaireVersion,
       answers,
+      tag1: info.tag1,
+      tag2: info.tag2,
     },
     { includeComments }
   );
@@ -439,6 +441,8 @@ export default function AssessResultPage() {
       addSnapshot(scores4, {
         testbedName: info.name,
         functionRole: info.functionRole,
+        tag1: info.tag1,
+        tag2: info.tag2,
         questionnaireVersion: SITE.questionnaireVersion,
         answers,
       });
@@ -481,6 +485,8 @@ export default function AssessResultPage() {
         date: snapshot.date.slice(0, 10),
         questionnaireVersion: snapshot.questionnaireVersion ?? SITE.questionnaireVersion,
         answers: snapshot.answers ?? answers,
+        tag1: snapshot.tag1 ?? info.tag1,
+        tag2: snapshot.tag2 ?? info.tag2,
       },
       { includeComments: true }
     );
@@ -510,6 +516,23 @@ export default function AssessResultPage() {
           >
             Er förmågeprofil · {today}
           </p>
+          {(info.name.trim() || info.tag1 || info.tag2) && (
+            <div className="flex items-center justify-center flex-wrap gap-2 mt-2">
+              {info.name.trim() && (
+                <span className="text-sm font-medium text-ink">{info.name}</span>
+              )}
+              {info.tag1 && (
+                <span className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-black/[0.05] text-muted">
+                  {info.tag1}
+                </span>
+              )}
+              {info.tag2 && (
+                <span className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-black/[0.05] text-muted">
+                  {info.tag2}
+                </span>
+              )}
+            </div>
+          )}
 
           {isEmpty ? (
             <div className="flex flex-col items-center gap-6 mt-10">

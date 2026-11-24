@@ -8,6 +8,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import AreaIcon from "@/components/AreaIcon";
 import { assessmentAreas, countAnswered } from "@/data/assessment";
 import { useAssessmentAnswers, useTestbedInfo } from "@/lib/storage";
+import { TAGS } from "@/config/tags";
 
 const FUNCTION_OPTIONS = [
   "Verksamhetsansvarig",
@@ -100,6 +101,45 @@ export default function AssessOverviewPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="testbed-tag1" className="text-xs text-muted">
+                {TAGS.tag1.label}
+              </label>
+              <select
+                id="testbed-tag1"
+                value={info.tag1}
+                onChange={(e) => setTestbedInfo({ tag1: e.target.value })}
+                className="rounded-lg bg-page border-none px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-1"
+              >
+                <option value="">Välj...</option>
+                {TAGS.tag1.options.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="testbed-tag2" className="text-xs text-muted">
+                {TAGS.tag2.label}
+              </label>
+              <select
+                id="testbed-tag2"
+                value={info.tag2}
+                onChange={(e) => setTestbedInfo({ tag2: e.target.value })}
+                className="rounded-lg bg-page border-none px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-1"
+              >
+                <option value="">Välj...</option>
+                {TAGS.tag2.options.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted">
+                Hjälper samordnaren att jämföra grupper av testbäddar.
+              </p>
             </div>
           </div>
 
