@@ -131,8 +131,6 @@ export interface AssessmentSnapshot {
    */
   testbedName?: string;
   functionRole?: string;
-  tag1?: string;
-  tag2?: string;
   questionnaireVersion?: string;
   answers?: AssessmentAnswersState;
   submittedAt?: string;
@@ -141,7 +139,4 @@ export interface AssessmentSnapshot {
 export interface TestbedInfo {
   name: string;
   functionRole: string;
-  /** Valfria taggar (se /config/tags.ts) — tom sträng = inget valt. */
-  tag1: string;
-  tag2: string;
 }
