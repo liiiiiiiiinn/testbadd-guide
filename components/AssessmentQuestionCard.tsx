@@ -64,13 +64,19 @@ export default function AssessmentQuestionCard({
 
   function handleRating(value: number) {
     const wasSelected = answer?.rating === value;
-    onChange({ rating: wasSelected ? undefined : value });
+    onChange({ rating: wasSelected ? undefined : value, yesno: undefined });
     flashSaved();
     if (!wasSelected) {
       clearTimeout(burstTimer.current);
       setBurstValue(value);
       burstTimer.current = setTimeout(() => setBurstValue(null), 500);
     }
+  }
+
+  function handleRatingFlag(value: "vetej" | "ejrelevant") {
+    const next = answer?.yesno === value ? undefined : value;
+    onChange({ yesno: next, rating: undefined });
+    flashSaved();
   }
 
   function handleYesNo(value: YesNoValue) {
@@ -110,6 +116,7 @@ export default function AssessmentQuestionCard({
             type="button"
             onClick={() => setWhyOpen((v) => !v)}
             aria-label="Varför spelar detta roll?"
+            aria-expanded={whyOpen}
             className="shrink-0 mt-0.5 transition-transform duration-200 hover:scale-110"
           >
             <Info size={15} color="#C4C0BB" />
@@ -161,6 +168,30 @@ export default function AssessmentQuestionCard({
           <div className="flex items-center justify-between mt-1.5">
             <span className="text-[11px] text-muted">{question.rating.low}</span>
             <span className="text-[11px] text-muted">{question.rating.high}</span>
+          </div>
+          <div className="flex gap-3 mt-2.5">
+            <button
+              type="button"
+              onClick={() => handleRatingFlag("vetej")}
+              className="text-xs transition-colors"
+              style={{
+                color: answer?.yesno === "vetej" ? "#1A1A1A" : "#9C9893",
+                fontWeight: answer?.yesno === "vetej" ? 500 : 400,
+              }}
+            >
+              Vet ej
+            </button>
+            <button
+              type="button"
+              onClick={() => handleRatingFlag("ejrelevant")}
+              className="text-xs transition-colors"
+              style={{
+                color: "#9C9893",
+                textDecoration: answer?.yesno === "ejrelevant" ? "line-through" : "none",
+              }}
+            >
+              Ej relevant
+            </button>
           </div>
         </div>
       )}

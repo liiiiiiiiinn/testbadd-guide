@@ -125,4 +125,18 @@ export type AssessmentAnswersState = Record<
 export interface AssessmentSnapshot {
   date: string;
   scores: Record<AssessmentAreaId, number | null>;
+  /**
+   * Tillagda i den samlade förbättringen — valfria så att äldre, redan
+   * sparade mätningar (utan dessa fält) fortsätter att kunna läsas.
+   */
+  testbedName?: string;
+  functionRole?: string;
+  questionnaireVersion?: string;
+  answers?: AssessmentAnswersState;
+  submittedAt?: string;
+}
+
+export interface TestbedInfo {
+  name: string;
+  functionRole: string;
 }
